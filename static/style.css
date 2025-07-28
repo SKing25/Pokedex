@@ -1,3 +1,39 @@
+@view-transition {  navigation: auto; }
+
+
+::view-transition-old(root) {
+animation: slide-out-to-left 0.5s forwards;
+
+
+}
+
+@keyframes slide-out-to-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  
+}
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+}
+
+::view-transition-new(root) {
+  animation: slide-in-from-right 0.5s forwards;
+}
+
 body {
   background-color: #f0f0f0;
   font-family: Arial, sans-serif;
@@ -44,6 +80,9 @@ input[type="text"]:focus, input[type="submit"]:focus {
 input[type="submit"]:hover:not(:focus) {
   border-color: green;
 }
+input[type="text"]:hover:not(:focus) {
+  border-color: green;
+}
 
 .list-section {
   width: 100%;
@@ -68,6 +107,10 @@ input[type="submit"]:hover:not(:focus) {
   width: 100%;
 }
 
+.list-container.has-pokemon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 100px rgba(255, 60, 60, 0.8);
+}
 
 
 .list-container.has-pokemon {
@@ -98,6 +141,15 @@ input[type="submit"]:hover:not(:focus) {
   /* Suavizado mejorado */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.pokemon-sprite img:hover {
+  filter: drop-shadow(0 0 20px var(--pokemon-color, rgba(0,0,0,0.5)));
+  transform: scale(1.5);
+  transition: transform 0.3s ease, filter 0.3s ease; 
+}
+.pokemon-sprite img {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pokemon-name {
