@@ -114,37 +114,46 @@ def get_region_info(region):
 
 # Me voy a pega un tiro ya lo habia hecho y bien bonito ;-; (pero funciona q es lo importante)
 def n_pokemons(rango):
-    rango = rango.replace(" ", "").split('-')
-
-    try:
-        if rango[0] == "" and rango[1] != "":
-            start = 1
-            finish = int(rango[1])
-        elif rango[1] == "" and rango[0] != "":
-            start = int(rango[0])
-            finish = 1025
-        elif rango[0] != "" and rango[1] != "":
-            start = int(rango[0])
-            finish = int(rango[1])
-        else:
-            return None
-
-        if start <= 0 or finish <= 0 or start > finish:
-            return None
-
-    except ValueError:
-        return None
-
     pokemons = []
-    i = start
-    data = get_pokedata(i)
-    while data and i <= finish:
+
+    if '-' in rango:
+        rango = rango.replace(" ", "").split('-')
         try:
-            data = get_pokedata(i)
-            pokemons.append(get_pokeinfo(i, data))
-            i += 1
-        except:
-            break
+            if rango[0] == "" and rango[1] != "":
+                start = 1
+                finish = int(rango[1])
+            elif rango[1] == "" and rango[0] != "":
+                start = int(rango[0])
+                finish = 1025
+            elif rango[0] != "" and rango[1] != "":
+                start = int(rango[0])
+                finish = int(rango[1])
+            else:
+                return None
+
+            if start <= 0 or finish <= 0 or start > finish:
+                return None
+
+        except ValueError:
+            return None
+
+        i = start
+        data = get_pokedata(i)
+        while data and i <= finish:
+            try:
+                data = get_pokedata(i)
+                pokemons.append(get_pokeinfo(i, data))
+                i += 1
+            except:
+                break
+
+    elif ',' in rango:
+        rango = rango.replace(" ", "").split(',')
+        for p in rango:
+            data = get_pokedata(p)
+            if data:
+                index = data["id"]
+                pokemons.append(get_pokeinfo(index, data))
 
     return pokemons
 
@@ -182,12 +191,11 @@ def pokedex():
     if not valor:
         return render_template('pokedex.html')
 
-    if '-' in valor:
+    if '-' or ',' in valor:
         pokemons = n_pokemons(valor)
         return render_template('pokedex.html',
                                varios=True,
                                pokemons=pokemons)
-
 
     info = one_pokemon(valor)
     if info is None:
