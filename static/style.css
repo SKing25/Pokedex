@@ -66,3 +66,109 @@ input[type="submit"]:hover:not(:focus) {
   min-height: 100px;
   transition: all 0.3s ease;
 }
+
+
+
+.list-container.has-pokemon {
+  box-shadow: 0 0 80px var(--pokemon-color, rgba(255, 60, 60, 0.6));
+  border-color: var(--pokemon-color, #ccc);
+}
+
+.pokemon-info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.pokemon-sprite {
+  text-align: center;
+  min-width: 200px;
+}
+
+.pokemon-sprite img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px var(--pokemon-color, rgba(0,0,0,0.3)));
+  transition: filter 0.3s ease;
+  /* Mejorar calidad de imagen */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  /* Suavizado mejorado */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pokemon-name {
+  font-size: 2em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+}
+
+.pokemon-id {
+  color: #666;
+  font-size: 1.2em;
+  margin-bottom: 15px;
+}
+
+.pokemon-types {
+  margin-bottom: 15px;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 5px 15px;
+  margin: 2px;
+  border-radius: 20px;
+  color: white;
+  font-weight: bold;
+  text-transform: capitalize;
+  background-color: var(--pokemon-color, #68A090);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.pokemon-stats {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+  border-left: 4px solid var(--pokemon-color, #68A090);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.stat-label {
+  font-weight: bold;
+  color: #555;
+}
+
+.pokemon-text-info {
+  width: 100%;
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #333;
+}
+
+.no-pokemon {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 1.2em;
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+
+
+.list-container:hover.has-pokemon {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 100px var(--pokemon-color, rgba(255, 60, 60, 0.8));
+}
