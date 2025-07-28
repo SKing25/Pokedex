@@ -112,26 +112,41 @@ def get_region_info(region):
 
     return sorted(pokemons, key=lambda x: x['index']) if pokemons else None
 
-# Una mousequeherramienta q la usare mas adelante
+# Me voy a pega un tiro ya lo habia hecho y bien bonito ;-; (pero funciona q es lo importante)
+def n_pokemons(rango):
+    rango = rango.replace(" ", "").split('-')
 
-#Q monda es eso?
-def n_pokemons():
-    n = input("ingresa el numero de pokemons que quieres ver: ")
     try:
-        limit = int(n)
-        if limit <= 0:
-            print("Numero invalido")
-            return
+        if rango[0] == "" and rango[1] != "":
+            start = 1
+            finish = int(rango[1])
+        elif rango[1] == "" and rango[0] != "":
+            start = int(rango[0])
+            finish = 1025
+        elif rango[0] != "" and rango[1] != "":
+            start = int(rango[0])
+            finish = int(rango[1])
+        else:
+            return None
+
+        if start <= 0 or finish <= 0 or start > finish:
+            return None
+
     except ValueError:
-        print("Numero invalido")
-        return
-    print(f"Obteniendo información de {limit} Pokémon(s)...")
-    for i in range(1, limit + 1):
-        data = get_pokedata(i)
-        if data:
-            get_pokeinfo(i, data)
-    else:
-        print("No se pudo obtener la información del Pokémon. Verifica el nombre o número ingresado.")
+        return None
+
+    pokemons = []
+    i = start
+    data = get_pokedata(i)
+    while data and i <= finish:
+        try:
+            data = get_pokedata(i)
+            pokemons.append(get_pokeinfo(i, data))
+            i += 1
+        except:
+            break
+
+    return pokemons
 
 import random
 
@@ -163,19 +178,26 @@ def pokedex():
         valor = request.form.get('valor')
     elif request.method == 'GET':
         valor = request.args.get('valor')
-    # Listo ya no esta tan feo
+
     if not valor:
         return render_template('pokedex.html')
+
+    if '-' in valor:
+        pokemons = n_pokemons(valor)
+        return render_template('pokedex.html',
+                               varios=True,
+                               pokemons=pokemons)
+
 
     info = one_pokemon(valor)
     if info is None:
         region = get_region_info(valor)
         return render_template('pokedex.html',
-                               es_region=True,
+                               varios=True,
                                pokemons=region)
 
     return render_template('pokedex.html',
-                            es_region=False,
+                            varios=False,
                             datos=info)
 
 if __name__ == '__main__':
