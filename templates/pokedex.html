@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form method="post">
+        <input type="text" name="valor" placeholder="Nombre o numero" required>
+        <input type="submit" value="Insertar">
+    </form>
+
+    <div class="list-container">
+        {{ datos|replace('\n', '<br>')|safe }}
+    </div>
+</body>
+</html>
