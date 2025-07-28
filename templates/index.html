@@ -2,10 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Menu</title>
-   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex - Inicio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <a href="/pokedex", id="to_pokedex">Pokedex</a>
+    <div class="index-container">
+        <header class="index-header">
+            <h1 class="main-title">Pokédex</h1>
+        </header>
+
+        <div class="random-pokemon-showcase">
+            <h2 class="showcase-title">Pokémons del día</h2>
+            {% if random_pokemons %}
+            <div class="pokemon-carousel">
+                {% for pokemon in random_pokemons %}
+                <a href="/pokedex?valor={{ pokemon.name }}" class="pokemon-card-link">
+                    <div class="carousel-pokemon" style="--pokemon-color: {{ pokemon.type_color }};">
+                        <div class="pokemon-sprite-mini">
+                            {% if pokemon.sprite %}
+                                <img src="{{ pokemon.sprite }}" 
+                                     alt="{{ pokemon.name }}" 
+                                     class="floating-sprite"
+                                     view-transition-name="sprite{{ loop.index }}">
+                            {% endif %}
+                        </div>
+                        <div class="pokemon-mini-info">
+                            <h3 class="pokemon-mini-name">{{ pokemon.name }}</h3>
+                            <div class="pokemon-mini-types">
+                                {% for type in pokemon.types %}
+                                    <span class="mini-type-badge">{{ type }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-pokemon-showcase">
+                <p>Cargando pokémons del día...</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="cta-section">
+            <a href="/pokedex" class="pokedex-button" id="to_pokedex">
+                <span class="button-text">Explorar Pokédex</span>
+                <div class="button-glow"></div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sprites = document.querySelectorAll('.floating-sprite');
+            
+            sprites.forEach((sprite, index) => {
+                sprite.style.animationDelay = `${index * 0.5}s`;
+                
+                setTimeout(() => {
+                    sprite.classList.add('sprite-loaded');
+                }, index * 200);
+            });
+
+            // View Transitions API para todos los enlaces
+            if ('startViewTransition' in document) {
+                const allLinks = document.querySelectorAll('.pokemon-card-link, #to_pokedex');
+                
+                allLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const href = this.href;
+                        
+                        document.startViewTransition(() => {
+                            window.location.href = href;
+                        });
+                    });
+                });
+            }
+
+            // Efecto hover mejorado para las cartas
+            const pokemonCards = document.querySelectorAll('.carousel-pokemon');
+            pokemonCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.05)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+  // Manejar todos los clicks en enlaces de Pokémon
+  document.querySelectorAll('a[href^="/pokedex"]').forEach(link => {
+    link.addEventListener('click', async (e) => {
+      if (!document.startViewTransition) {
+        return; // Navegación normal si no hay soporte
+      }
+      
+      e.preventDefault();
+      
+      // Iniciar transición
+      const transition = document.startViewTransition(async () => {
+        await fetch(link.href); // Precargar contenido
+        location.href = link.href;
+      });
+      
+      // Manejar posible cancelación
+      transition.ready.catch(() => {
+        location.href = link.href; // Fallback si se cancela
+      });
+    });
+  });
+});
+    </script>
 </body>
 </html>

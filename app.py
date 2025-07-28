@@ -133,9 +133,29 @@ def n_pokemons():
     else:
         print("No se pudo obtener la información del Pokémon. Verifica el nombre o número ingresado.")
 
+import random
+
+def get_random_pokemons(n):
+    """Obtiene n pokémons aleatorios usando la pokeapi"""
+    pokemons = []
+    max_pokemon_id = 1010  # Actualiza este número según la cantidad de pokémon en la API
+    ids = random.sample(range(1, max_pokemon_id + 1), n)
+    for poke_id in ids:
+        data = get_pokedata(poke_id)
+        if data:
+            info = get_pokeinfo(data["id"], data)
+            pokemons.append(info)
+    return pokemons
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+       # Obtenemos pokémons aleatorios para mostrar en el index
+    
+    random_pokemons = get_random_pokemons(10)
+    
+    for pokemon in random_pokemons:
+        print(f"- {pokemon['name']} (#{pokemon['index']})") # pa saber si workea sin tanta demora
+    return render_template('index.html', random_pokemons=random_pokemons)
 
 @app.route('/pokedex', methods=['GET', 'POST'])
 def pokedex():
