@@ -15,6 +15,49 @@
         </section>
 
         <section class="list-section">
+            {% if es_region and pokemons %}
+            <div class="pokemon-grid">
+                {% for pokemon in pokemons %}
+                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};">
+                        <div class="pokemon-info">
+                            <div class="pokemon-name">{{ pokemon.name }}</div>
+                            <div class="pokemon-id">N.° {{ pokemon.index }}</div>
+
+                            <div class="pokemon-types">
+                                <strong>Tipos:</strong>
+                                {% for type in pokemon.types %}
+                                    <span class="type-badge">{{ type }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="pokemon-stats">
+                                <div class="stat-row">
+                                    <span class="stat-label">Altura:</span>
+                                    <span>{{ pokemon.height / 10 }} m</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Peso:</span>
+                                    <span>{{ pokemon.weight / 10 }} kg</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Habilidades:</span>
+                                        <span>{{ pokemon.abilities | join(', ') }}</span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="pokemon-sprite">
+                            {% if pokemon.sprite %}
+                                <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% else %}
+
             {% set pokemon_data = pokemon or datos %}
             <div class="list-container {% if pokemon_data %}has-pokemon{% endif %}" 
                  {% if pokemon_data and pokemon_data.type_color %}style="--pokemon-color: {{ pokemon_data.type_color }};"{% endif %}>
@@ -67,6 +110,7 @@
                 {% endif %}
                 
             </div>
+        {% endif %}
         </section>
     </main>
 </body>

@@ -65,6 +65,7 @@ input[type="submit"]:hover:not(:focus) {
   margin: 0 auto;
   min-height: 100px;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 
@@ -171,4 +172,13 @@ input[type="submit"]:hover:not(:focus) {
 .list-container:hover.has-pokemon {
   transform: translateY(-2px);
   box-shadow: 0 5px 100px var(--pokemon-color, rgba(255, 60, 60, 0.8));
+}
+
+.pokemon-grid {
+    display: grid;
+    grid-template-columns: 1fr;  /* Una sola columna */
+    gap: 1rem;
+    padding: 1rem;
+    max-width: 800px;  /* Opcional: limita el ancho máximo */
+    margin: 0 auto;    /* Opcional: centra la cuadrícula */
 }

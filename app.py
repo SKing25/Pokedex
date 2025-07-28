@@ -66,7 +66,36 @@ def one_pokemon(pokemon):
         index = data["id"]
         return get_pokeinfo(index, data)
     else:
-        return "No se pudo obtener info del pokemon"
+        return None
+
+def get_region(region):
+    url = f"https://pokeapi.co/api/v2/generation/{region}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return None
+
+def get_region_info(region):
+    data = get_region(region)
+    if data:
+        species = [p['name'] for p in data["pokemon_species"]]
+        pokemons = []
+        for i in range(len(species)):
+            pokedata = get_pokedata(species[i])
+            if pokedata:
+                info = one_pokemon(species[i])
+                pokemons.append(info)
+            else:
+                return None
+
+            pokemons = sorted(pokemons, key=lambda x: x['index'])
+
+        return pokemons
+
+    else:
+        return None
 
 # Una mousequeherramienta q la usare mas adelante
 
@@ -99,9 +128,20 @@ def pokedex():
         valor = request.form.get('valor')
     elif request.method == 'GET':
         valor = request.args.get('valor')
-    info = one_pokemon(valor) if valor else ""
-    return render_template('pokedex.html',
-                           datos=info)
+
+    # MK q mrd jajaja esto se ve bien feo, mas adelante lo mejorare
+    if valor:
+        info = one_pokemon(valor)
+        if info is None:
+            region = get_region_info(valor)
+            return render_template('pokedex.html',
+                                   es_region=True,
+                                   pokemons = region if region else None)
+        return render_template('pokedex.html',
+                               es_region=False,
+                               datos=info)
+
+    return render_template('pokedex.html')
 
 if __name__ == '__main__':
     app.run()
