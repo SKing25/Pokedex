@@ -32,7 +32,7 @@ def get_type_color(pokemon_type):
         'steel': '#B8B8D0',
         'fairy': '#EE99AC'
     }
-    return type_colors.get(pokemon_type, '#68A090')  # Color por defecto
+    return type_colors.get(pokemon_type, '#68A090')  # por si no lo encuentra, devuelve un color por defecto, que no es normal, porque normal es un tipo, entonces no se puede usar como color por defecto, capicci?
 
 def get_pokeinfo(index, data):
     name = data["name"].capitalize()
@@ -41,11 +41,11 @@ def get_pokeinfo(index, data):
     weight = data["weight"]
     types = [t["type"]["name"] for t in data["types"]]
     
-    # Obtener el color del tipo principal (primer tipo)
+    # Obtener el color del tipo principal (primer tipo) para usarlo en el CSS
     primary_type = types[0] if types else 'normal'
     type_color = get_type_color(primary_type)
     
-    # Crear diccionario con la información del Pokémon
+    # Puedes creer que tuve que ir a mirar un tutorial, porque se me olvido como se hacia esto? XD
     pokemon_info = {
         'index': index,
         'name': name,
