@@ -3,6 +3,18 @@ import requests
 
 app = Flask(__name__)
 
+REGIONES = {
+    'kanto': 'generation-i',
+    'johto': 'generation-ii',
+    'hoenn': 'generation-iii',
+    'sinnoh': 'generation-iv',
+    'teselia': 'generation-v',
+    'kalos': 'generation-vi',
+    'alola': 'generation-vii',
+    'galar': 'generation-viii',
+    'paldea': 'generation-ix'
+}
+
 def get_pokedata(pokemon):
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon}"
     response = requests.get(url)
@@ -78,24 +90,27 @@ def get_region(region):
         return None
 
 def get_region_info(region):
-    data = get_region(region)
-    if data:
-        species = [p['name'] for p in data["pokemon_species"]]
-        pokemons = []
-        for i in range(len(species)):
-            pokedata = get_pokedata(species[i])
-            if pokedata:
-                info = one_pokemon(species[i])
-                pokemons.append(info)
-            else:
-                return None
-
-            pokemons = sorted(pokemons, key=lambda x: x['index'])
-
-        return pokemons
-
-    else:
+    region = REGIONES.get(region.lower())
+    if not region:
         return None
+
+    data = get_region(region)
+    if not data:
+        return None
+
+    species = [p['name'] for p in data["pokemon_species"]]
+    pokemons = []
+    # Optimizamos esta madre para manejar mejor las peticiones
+    for species_name in species:
+        try:
+            pokedata = get_pokedata(species_name)
+            if pokedata:
+                info = get_pokeinfo(pokedata["id"], pokedata)
+                pokemons.append(info)
+        except:
+            continue
+
+    return sorted(pokemons, key=lambda x: x['index']) if pokemons else None
 
 # Una mousequeherramienta q la usare mas adelante
 
@@ -128,20 +143,20 @@ def pokedex():
         valor = request.form.get('valor')
     elif request.method == 'GET':
         valor = request.args.get('valor')
+    # Listo ya no esta tan feo
+    if not valor:
+        return render_template('pokedex.html')
 
-    # MK q mrd jajaja esto se ve bien feo, mas adelante lo mejorare
-    if valor:
-        info = one_pokemon(valor)
-        if info is None:
-            region = get_region_info(valor)
-            return render_template('pokedex.html',
-                                   es_region=True,
-                                   pokemons = region if region else None)
+    info = one_pokemon(valor)
+    if info is None:
+        region = get_region_info(valor)
         return render_template('pokedex.html',
-                               es_region=False,
-                               datos=info)
+                               es_region=True,
+                               pokemons=region)
 
-    return render_template('pokedex.html')
+    return render_template('pokedex.html',
+                            es_region=False,
+                            datos=info)
 
 if __name__ == '__main__':
     app.run()
