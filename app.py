@@ -112,7 +112,6 @@ def get_region_info(region):
 
     return sorted(pokemons, key=lambda x: x['index']) if pokemons else None
 
-# Me voy a pega un tiro ya lo habia hecho y bien bonito ;-; (pero funciona q es lo importante)
 def n_pokemons(rango):
     pokemons = []
 
@@ -157,6 +156,23 @@ def n_pokemons(rango):
 
     return pokemons
 
+def pokemon_info(pokemon):
+    data = get_pokedata(pokemon)
+    if data:
+        index = data["id"]
+        info = get_pokeinfo(index, data)
+        namestat = [s["stat"]["name"] for s in data["stats"]]
+        valorstat = [s["base_stat"] for s in data["stats"]]
+        masinfo = {}
+        stats = []
+        for i in range(len(namestat)):
+            stats.append(f"{namestat[i]}: {valorstat[i]}")
+
+        masinfo["stats"] = stats
+        return masinfo
+    else:
+        return None
+
 import random
 
 def get_random_pokemons(n):
@@ -191,7 +207,7 @@ def pokedex():
     if not valor:
         return render_template('pokedex.html')
 
-    if '-' or ',' in valor:
+    if '-' in valor or ',' in valor:
         pokemons = n_pokemons(valor)
         return render_template('pokedex.html',
                                varios=True,
@@ -207,6 +223,15 @@ def pokedex():
     return render_template('pokedex.html',
                             varios=False,
                             datos=info)
+
+@app.route('/pokedex/<pokemon_name>', methods=['GET', 'POST'])
+def pokemon_especifico(pokemon_name):
+    info = one_pokemon(pokemon_name)
+    masinfo = pokemon_info(pokemon_name)
+    info.update(masinfo)
+    if info:
+        return render_template('pokemon.html',
+                               datos=info)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
