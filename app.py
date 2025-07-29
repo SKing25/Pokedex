@@ -128,6 +128,19 @@ def get_ability_details(ability_url, is_hidden=False):
         }
     return None
 
+def get_all_sprites(sprites_data):
+    print(f"DEBUG: Sprites data from API: {sprites_data}") # Add this line for debugging
+    return {
+        'front_default': sprites_data.get('front_default'),
+        'front_shiny': sprites_data.get('front_shiny'),
+        'front_female': sprites_data.get('front_female'),
+        'front_shiny_female': sprites_data.get('front_shiny_female'),
+        'back_default': sprites_data.get('back_default'),
+        'back_shiny': sprites_data.get('back_shiny'),
+        'back_female': sprites_data.get('back_female'),
+        'back_shiny_female': sprites_data.get('back_shiny_female')
+    }
+
 def get_pokeinfo(index, data):
     name = data["name"].capitalize()
     abilities = [a["ability"]["name"] for a in data["abilities"]]
@@ -169,6 +182,9 @@ def get_pokeinfo(index, data):
         display_name = stat_names_map.get(stat_name, stat_name.replace('-', ' ').title())
         stats.append(f"{display_name}: {stat_value}")
     
+    # Obtener todos los sprites
+    sprites = get_all_sprites(data.get('sprites', {}))
+    
     pokemon_info = {
         'index': index,
         'name': name,
@@ -179,7 +195,9 @@ def get_pokeinfo(index, data):
         'primary_type': primary_type,
         'type_color': type_color,
         'locations': locations,
-        'sprite': data.get('sprites', {}).get('front_default', ''),
+        'sprite': sprites['front_default'],  
+        'sprites': sprites,  # Todos los sprites disponibles, en caso de shiny o género
+        'back_sprite': sprites['back_default'],
         'stats': stats
     }
     
@@ -346,6 +364,9 @@ def pokemon_especifico(pokemon_name):
             if details:
                 ability_details.append(details)
         pokemon['ability_details'] = ability_details
+        
+        # Actualizar sprites con todos los disponibles
+        pokemon['sprites'] = get_all_sprites(data.get('sprites', {}))
     
     return render_template('pokemon.html', pokemon_data=pokemon)
 

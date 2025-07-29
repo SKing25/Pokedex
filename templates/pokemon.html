@@ -6,11 +6,11 @@
     <title>{{ pokemon_data.name }} - Pokédex</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
+    <script src="{{ url_for('static', filename='scripts/pokemon.js') }}" defer></script>
 </head>
 <body>
     <main class="main-wrapper">
         <div class="pokemon-detail-container" style="--pokemon-color: {{ pokemon_data.type_color }};">
-            <!-- Header con nombre y botón de volver -->
             <div class="pokemon-detail-header">
                 <div>
                     <h1 class="pokemon-name">{{ pokemon_data.name }}</h1>
@@ -19,7 +19,6 @@
                 <a href="/pokedex" class="back-button">Volver a Pokédex</a>
             </div>
 
-            <!-- Tipos y sprite principal -->
             <div class="pokemon-types-section">
                 <div class="pokemon-types">
                     <strong>Tipos:</strong>
@@ -27,15 +26,44 @@
                         <span class="type-badge" style="background-color: {{ get_type_color(type) if get_type_color else pokemon_data.type_color }}">{{ type }}</span>
                     {% endfor %}
                 </div>
+
                 <div class="pokemon-sprite">
-                    {% if pokemon_data.sprite %}
-                    <img src="{{ pokemon_data.sprite }}" alt="{{ pokemon_data.name }}" 
-                         class="detail-sprite" view-transition-name="pokemon-sprite">
-                    {% endif %}
+                    <div class="sprite-controls">
+                        <div class="toggle-switch-container">
+                            <button class="toggle-button" id="normalBtn" onclick="toggleShiny(false)">
+                                Normal
+                            </button>
+                            <button class="toggle-button" id="shinyBtn" onclick="toggleShiny(true)">
+                                Shiny
+                            </button>
+                        </div>
+
+                        {% if pokemon_data.sprites.front_female or pokemon_data.sprites.front_shiny_female %}
+                        <div class="toggle-switch-container">
+                            <button class="toggle-button" id="maleBtn" onclick="toggleGender('male')">
+                                ♂ Macho
+                            </button>
+                            <button class="toggle-button" id="femaleBtn" onclick="toggleGender('female')">
+                                ♀ Hembra
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="sprite-container">
+                        <img id="pokemonSprite"
+                             src="{{ pokemon_data.sprites.front_default }}"
+                             alt="{{ pokemon_data.name }}"
+                             class="detail-sprite loaded"
+                             view-transition-name="pokemon-sprite">
+                    </div>
+
+                    <div class="sprite-info" id="spriteInfo">
+                        Normal - Macho
+                    </div>
                 </div>
             </div>
 
-            <!-- Sección de información básica -->
             <div class="pokemon-basic-info">
                 <div class="info-card">
                     <h3 class="info-title">Características</h3>
@@ -47,10 +75,8 @@
                         <span class="stat-label">Peso:</span>
                         <span>{{ "%.1f"|format(pokemon_data.weight / 10) }} kg</span>
                     </div>
-                    
                 </div>
 
-                <!-- Estadísticas base -->
                 <div class="info-card stats-card">
                     <h3 class="info-title">Estadísticas base</h3>
                     <div class="stats-grid">
@@ -82,7 +108,6 @@
                 </div>
             </div>
 
-            <!-- Resistencia y Debilidades -->
             {% if pokemon_data.damage_relations %}
             <div class="damage-relations-section">
                 <div class="damage-card resistances">
@@ -119,7 +144,6 @@
             </div>
             {% endif %}
 
-            <!-- Habilidades detalladas -->
             {% if pokemon_data.ability_details %}
             <div class="abilities-section">
                 <h3 class="section-title">Habilidades</h3>
@@ -135,7 +159,6 @@
             </div>
             {% endif %}
 
-            <!-- Ubicaciones -->
             {% if pokemon_data.locations and pokemon_data.locations|length > 0 %}
             <div class="locations-section">
                 <h3 class="section-title">Ubicaciones</h3>
@@ -149,26 +172,6 @@
         </div>
     </main>
 
-    <script>
-        // View Transitions para el botón de volver
-        document.querySelector('.back-button').addEventListener('click', function(e) {
-            if ('startViewTransition' in document) {
-                e.preventDefault();
-                document.startViewTransition(() => {
-                    window.location.href = this.href;
-                });
-            }
-        });
 
-        // Animación de carga
-        document.addEventListener('DOMContentLoaded', function() {
-            const sprite = document.querySelector('.detail-sprite');
-            if (sprite) {
-                setTimeout(() => {
-                    sprite.classList.add('sprite-loaded');
-                }, 300);
-            }
-        });
-    </script>
 </body>
 </html>
