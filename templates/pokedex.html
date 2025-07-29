@@ -18,7 +18,7 @@
             {% if varios and pokemons %}
             <div class="pokemon-grid">
                 {% for pokemon in pokemons %}
-                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};">
+                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};" onclick="window.location.href='/pokedex/{{ pokemon.name|capitalize }}'">
                         <div class="pokemon-info">
                             <div class="pokemon-name">{{ pokemon.name }}</div>
                             <div class="pokemon-id">N.° {{ pokemon.index }}</div>
