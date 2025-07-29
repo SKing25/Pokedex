@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Gestión de Datos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
 </head>
 <body>
     <main class="main-wrapper">
@@ -18,7 +19,7 @@
             {% if varios and pokemons %}
             <div class="pokemon-grid">
                 {% for pokemon in pokemons %}
-                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};">
+                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};" onclick="window.location.href='/pokedex/{{ pokemon.name|capitalize }}'">
                         <div class="pokemon-info">
                             <div class="pokemon-name">{{ pokemon.name }}</div>
                             <div class="pokemon-id">N.° {{ pokemon.index }}</div>
