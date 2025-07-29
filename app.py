@@ -186,6 +186,8 @@ def pokemon_info(pokemon):
     else:
         return None
 
+import random
+
 def get_random_pokemons(n):
     """Obtiene n pokémons aleatorios usando la pokeapi"""
     pokemons = []
