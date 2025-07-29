@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<-- Buena suerte bb recuerda q eres el mejor en esta monda 😉-->
+    {% set pokemon_data = pokemon or datos %}
+    <div class="pokemon-info">
+        <div class="pokemon-name">{{ pokemon_data.name }}</div>
+        <div class="pokemon-id">N.° {{ pokemon_data.index }}</div>
+
+        <div class="pokemon-types">
+            <strong>Tipos:</strong>
+            {% for type in pokemon_data.types %}
+                <span class="type-badge">{{ type }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="pokemon-stats">
+            <div class="stat-row">
+                <span class="stat-label">Altura:</span>
+                <span>{{ pokemon_data.height / 10 }} m</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Peso:</span>
+                <span>{{ pokemon_data.weight / 10 }} kg</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Habilidades:</span>
+                    <span>{{ pokemon_data.abilities | join(', ') }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">stats:</span>
+                    <span>{{ pokemon_data.stats | join(', ') }}</span>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
