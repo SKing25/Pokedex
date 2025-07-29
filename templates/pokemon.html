@@ -1,44 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pokemon_data.name }} - Pokédex</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
 </head>
 <body>
-<-- Buena suerte bb recuerda q eres el mejor en esta monda 😉-->
-    {% set pokemon_data = pokemon or datos %}
-    <div class="pokemon-info">
-        <div class="pokemon-name">{{ pokemon_data.name }}</div>
-        <div class="pokemon-id">N.° {{ pokemon_data.index }}</div>
+    <main class="main-wrapper">
+        <div class="pokemon-detail-container" style="--pokemon-color: {{ pokemon_data.type_color }};">
+            <!-- Header con nombre y botón de volver -->
+            <div class="pokemon-detail-header">
+                <div>
+                    <h1 class="pokemon-name">{{ pokemon_data.name }}</h1>
+                    <div class="pokemon-id">N.° {{ "%03d"|format(pokemon_data.index) }}</div>
+                </div>
+                <a href="/pokedex" class="back-button">Volver a Pokédex</a>
+            </div>
 
-        <div class="pokemon-types">
-            <strong>Tipos:</strong>
-            {% for type in pokemon_data.types %}
-                <span class="type-badge">{{ type }}</span>
-            {% endfor %}
+            <!-- Tipos y sprite principal -->
+            <div class="pokemon-types-section">
+                <div class="pokemon-types">
+                    <strong>Tipos:</strong>
+                    {% for type in pokemon_data.types %}
+                        <span class="type-badge" style="background-color: {{ get_type_color(type) if get_type_color else pokemon_data.type_color }}">{{ type }}</span>
+                    {% endfor %}
+                </div>
+                <div class="pokemon-sprite">
+                    {% if pokemon_data.sprite %}
+                    <img src="{{ pokemon_data.sprite }}" alt="{{ pokemon_data.name }}" 
+                         class="detail-sprite" view-transition-name="pokemon-sprite">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sección de información básica -->
+            <div class="pokemon-basic-info">
+                <div class="info-card">
+                    <h3 class="info-title">Características</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">Altura:</span>
+                        <span>{{ "%.1f"|format(pokemon_data.height / 10) }} m</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Peso:</span>
+                        <span>{{ "%.1f"|format(pokemon_data.weight / 10) }} kg</span>
+                    </div>
+                    
+                </div>
+
+                <!-- Estadísticas base -->
+                <div class="info-card stats-card">
+                    <h3 class="info-title">Estadísticas base</h3>
+                    <div class="stats-grid">
+                        {% if pokemon_data.stats %}
+                            {% for stat in pokemon_data.stats %}
+                                {% if stat is mapping %}
+                                    <div class="stat-bar-container">
+                                        <span class="stat-name">{{ stat.name }}:</span>
+                                        <div class="stat-bar-bg">
+                                            <div class="stat-bar-fill" style="width: {{ (stat.value / 255) * 100 }}%;"></div>
+                                            <span class="stat-value">{{ stat.value }}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    {% set stat_parts = stat.split(': ') %}
+                                    {% set stat_name = stat_parts[0] %}
+                                    {% set stat_value = stat_parts[1]|int %}
+                                    <div class="stat-bar-container">
+                                        <span class="stat-name">{{ stat_name }}:</span>
+                                        <div class="stat-bar-bg">
+                                            <div class="stat-bar-fill" style="width: {{ (stat_value / 255) * 100 }}%;"></div>
+                                            <span class="stat-value">{{ stat_value }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resistencia y Debilidades -->
+            {% if pokemon_data.damage_relations %}
+            <div class="damage-relations-section">
+                <div class="damage-card resistances">
+                    <h3 class="damage-title">Resistencias</h3>
+                    <ul class="damage-list">
+                        {% for resistance in pokemon_data.damage_relations.resistances %}
+                            <li>
+                                <span class="type-tag" style="background-color: {{ get_type_color(resistance.type) if get_type_color else pokemon_data.type_color }}">
+                                    {{ resistance.type }}
+                                </span>
+                                <span class="damage-multiplier x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}">
+                                    x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="damage-card weaknesses">
+                    <h3 class="damage-title">Debilidades</h3>
+                    <ul class="damage-list">
+                        {% for weakness in pokemon_data.damage_relations.weaknesses %}
+                            <li>
+                                <span class="type-tag" style="background-color: {{ get_type_color(weakness.type) if get_type_color else pokemon_data.type_color }}">
+                                    {{ weakness.type }}
+                                </span>
+                                <span class="damage-multiplier x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}">
+                                    x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Habilidades detalladas -->
+            {% if pokemon_data.ability_details %}
+            <div class="abilities-section">
+                <h3 class="section-title">Habilidades</h3>
+                {% for ability in pokemon_data.ability_details %}
+                    <div class="ability-card">
+                        <h4 class="ability-name">{{ ability.name }}</h4>
+                        <p class="ability-description">{{ ability.description }}</p>
+                        {% if ability.is_hidden %}
+                            <span class="hidden-ability-tag">Habilidad Oculta</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Ubicaciones -->
+            {% if pokemon_data.locations and pokemon_data.locations|length > 0 %}
+            <div class="locations-section">
+                <h3 class="section-title">Ubicaciones</h3>
+                <div class="locations-grid">
+                    {% for location in pokemon_data.locations %}
+                    <div class="location-item">{{ location }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
+    </main>
 
-        <div class="pokemon-stats">
-            <div class="stat-row">
-                <span class="stat-label">Altura:</span>
-                <span>{{ pokemon_data.height / 10 }} m</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Peso:</span>
-                <span>{{ pokemon_data.weight / 10 }} kg</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Habilidades:</span>
-                    <span>{{ pokemon_data.abilities | join(', ') }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">stats:</span>
-                    <span>{{ pokemon_data.stats | join(', ') }}</span>
-            </div>
+    <script>
+        // View Transitions para el botón de volver
+        document.querySelector('.back-button').addEventListener('click', function(e) {
+            if ('startViewTransition' in document) {
+                e.preventDefault();
+                document.startViewTransition(() => {
+                    window.location.href = this.href;
+                });
+            }
+        });
 
-        </div>
-    </div>
+        // Animación de carga
+        document.addEventListener('DOMContentLoaded', function() {
+            const sprite = document.querySelector('.detail-sprite');
+            if (sprite) {
+                setTimeout(() => {
+                    sprite.classList.add('sprite-loaded');
+                }, 300);
+            }
+        });
+    </script>
 </body>
 </html>
