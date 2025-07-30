@@ -1,0 +1,15 @@
+<div class="sprite-container">
+    {% if sprite.url %}
+        <img id="pokemonSprite"
+             src="{{ sprite.url }}"
+             alt="Sprite del Pokémon"
+             class="detail-sprite loaded"
+             view-transition-name="pokemon-sprite">
+    {% else %}
+        <div class="sprite-not-available">Sprite no disponible</div>
+    {% endif %}
+</div>
+
+<div class="sprite-info">
+    {{ sprite.description }}
+</div>

@@ -839,3 +839,31 @@ input[type="text"]:hover:not(:focus) {
                 border-radius: 20px;
             }
         }
+
+
+        /* Animaciones y estados del sprite */
+.detail-sprite {
+    transition: opacity 0.2s ease;
+    max-width: 100%;
+    height: auto;
+}
+
+.detail-sprite.changing {
+    opacity: 0;
+}
+
+.detail-sprite.loaded {
+    opacity: 1;
+}
+
+.sprite-not-available {
+    color: #ff6b6b;
+    font-style: italic;
+}
+
+/* Botones de control */
+.toggle-button.active {
+    background-color: var(--pokemon-color);
+    color: white;
+}
+

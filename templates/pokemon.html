@@ -6,7 +6,7 @@
     <title>{{ pokemon_data.name }} - Pokédex</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
-    <script src="{{ url_for('static', filename='scripts/pokemon.js') }}" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
     <main class="main-wrapper">
@@ -29,37 +29,59 @@
 
                 <div class="pokemon-sprite">
                     <div class="sprite-controls">
-                        <div class="toggle-switch-container">
-                            <button class="toggle-button" id="normalBtn" onclick="toggleShiny(false)">
+                        <div class="toggle-switch-container" id="shiny-controls">
+                            <button class="toggle-button active" 
+                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=false&gender={{ pokemon_data.current_gender }}"
+                                    hx-target="#sprite-section"
+                                    hx-swap="innerHTML"
+                                    onclick="updateActiveButtons(this, 'shiny-controls', false)">
                                 Normal
                             </button>
-                            <button class="toggle-button" id="shinyBtn" onclick="toggleShiny(true)">
+                            <button class="toggle-button" 
+                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=true&gender={{ pokemon_data.current_gender }}"
+                                    hx-target="#sprite-section"
+                                    hx-swap="innerHTML"
+                                    onclick="updateActiveButtons(this, 'shiny-controls', true)">
                                 Shiny
                             </button>
                         </div>
 
-                        {% if pokemon_data.sprites.front_female or pokemon_data.sprites.front_shiny_female %}
-                        <div class="toggle-switch-container">
-                            <button class="toggle-button" id="maleBtn" onclick="toggleGender('male')">
+                        {% if pokemon_data.has_female_sprites %}
+                        <div class="toggle-switch-container" id="gender-controls">
+                            <button class="toggle-button active" 
+                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=male"
+                                    hx-target="#sprite-section"
+                                    hx-swap="innerHTML"
+                                    onclick="updateActiveButtons(this, 'gender-controls', 'male')">
                                 ♂ Macho
                             </button>
-                            <button class="toggle-button" id="femaleBtn" onclick="toggleGender('female')">
+                            <button class="toggle-button" 
+                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=female"
+                                    hx-target="#sprite-section"
+                                    hx-swap="innerHTML"
+                                    onclick="updateActiveButtons(this, 'gender-controls', 'female')">
                                 ♀ Hembra
                             </button>
                         </div>
                         {% endif %}
                     </div>
 
-                    <div class="sprite-container">
-                        <img id="pokemonSprite"
-                             src="{{ pokemon_data.sprites.front_default }}"
-                             alt="{{ pokemon_data.name }}"
-                             class="detail-sprite loaded"
-                             view-transition-name="pokemon-sprite">
-                    </div>
+                    <div id="sprite-section">
+                        <div class="sprite-container">
+                            {% if pokemon_data.current_sprite.url %}
+                                <img id="pokemonSprite"
+                                     src="{{ pokemon_data.current_sprite.url }}"
+                                     alt="{{ pokemon_data.name }}"
+                                     class="detail-sprite loaded"
+                                     view-transition-name="pokemon-sprite">
+                            {% else %}
+                                <div class="sprite-not-available">Sprite no disponible</div>
+                            {% endif %}
+                        </div>
 
-                    <div class="sprite-info" id="spriteInfo">
-                        Normal - Macho
+                        <div class="sprite-info">
+                            {{ pokemon_data.current_sprite.description }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -172,6 +194,57 @@
         </div>
     </main>
 
+    <script>
+        // Variables globales para mantener el estado
+        let currentShiny = false;
+        let currentGender = 'male';
 
+        function updateActiveButtons(clickedButton, containerId, newValue) {
+            // Actualizar estado global
+            if (containerId === 'shiny-controls') {
+                currentShiny = newValue;
+            } else if (containerId === 'gender-controls') {
+                currentGender = newValue;
+            }
+
+            // Remover clase active de todos los botones en el contenedor
+            const container = document.getElementById(containerId);
+            const buttons = container.querySelectorAll('.toggle-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Agregar clase active al botón clickeado
+            clickedButton.classList.add('active');
+
+            // Actualizar los URLs de los otros botones para mantener consistencia
+            updateButtonUrls();
+        }
+
+        function updateButtonUrls() {
+            const pokemonName = '{{ pokemon_data.name.lower() }}';
+            
+            // Actualizar botones de shiny
+            const shinyContainer = document.getElementById('shiny-controls');
+            const normalBtn = shinyContainer.children[0];
+            const shinyBtn = shinyContainer.children[1];
+            
+            normalBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=false&gender=${currentGender}`);
+            shinyBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=true&gender=${currentGender}`);
+
+            // Actualizar botones de género si existen
+            const genderContainer = document.getElementById('gender-controls');
+            if (genderContainer) {
+                const maleBtn = genderContainer.children[0];
+                const femaleBtn = genderContainer.children[1];
+                
+                maleBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${currentShiny}&gender=male`);
+                femaleBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${currentShiny}&gender=female`);
+            }
+        }
+
+        
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            htmx.process(event.target);
+        });
+    </script>
 </body>
 </html>

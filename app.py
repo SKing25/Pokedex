@@ -129,7 +129,6 @@ def get_ability_details(ability_url, is_hidden=False):
     return None
 
 def get_all_sprites(sprites_data):
-    print(f"DEBUG: Sprites data from API: {sprites_data}") # Add this line for debugging
     return {
         'front_default': sprites_data.get('front_default'),
         'front_shiny': sprites_data.get('front_shiny'),
@@ -140,6 +139,34 @@ def get_all_sprites(sprites_data):
         'back_female': sprites_data.get('back_female'),
         'back_shiny_female': sprites_data.get('back_shiny_female')
     }
+
+def get_current_sprite(sprites, is_shiny, gender):
+    """Determina qué sprite mostrar basado en los parámetros"""
+    if is_shiny and gender == 'female' and sprites.get('front_shiny_female'):
+        return {
+            'url': sprites['front_shiny_female'],
+            'description': 'Shiny - Hembra'
+        }
+    elif is_shiny and sprites.get('front_shiny'):
+        return {
+            'url': sprites['front_shiny'],
+            'description': 'Shiny - Macho'
+        }
+    elif not is_shiny and gender == 'female' and sprites.get('front_female'):
+        return {
+            'url': sprites['front_female'],
+            'description': 'Normal - Hembra'
+        }
+    elif sprites.get('front_default'):
+        return {
+            'url': sprites['front_default'],
+            'description': 'Normal - Macho'
+        }
+    else:
+        return {
+            'url': None,
+            'description': 'Sprite no disponible'
+        }
 
 def get_pokeinfo(index, data):
     name = data["name"].capitalize()
@@ -367,8 +394,33 @@ def pokemon_especifico(pokemon_name):
         
         # Actualizar sprites con todos los disponibles
         pokemon['sprites'] = get_all_sprites(data.get('sprites', {}))
+        
+        # Configuración inicial del sprite
+        pokemon['has_female_sprites'] = bool(pokemon['sprites'].get('front_female') or pokemon['sprites'].get('front_shiny_female'))
+        pokemon['current_sprite'] = get_current_sprite(pokemon['sprites'], False, 'male')
+        pokemon['current_shiny'] = False
+        pokemon['current_gender'] = 'male'
     
     return render_template('pokemon.html', pokemon_data=pokemon)
+
+@app.route('/sprite/<pokemon_name>')
+def get_sprite(pokemon_name):
+    """Ruta HTMX para obtener sprites dinámicamente"""
+    is_shiny = request.args.get('shiny', 'false').lower() == 'true'
+    gender = request.args.get('gender', 'male')
+    
+    # Obtener datos del Pokémon
+    data = get_pokedata(pokemon_name.lower())
+    if not data:
+        return '<div class="sprite-not-available">Error al cargar sprite</div>', 404
+    
+    sprites = get_all_sprites(data.get('sprites', {}))
+    current_sprite = get_current_sprite(sprites, is_shiny, gender)
+    
+    return render_template('sprite_partial.html', 
+                         sprite=current_sprite, 
+                         is_shiny=is_shiny, 
+                         gender=gender)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
