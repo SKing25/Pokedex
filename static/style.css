@@ -693,8 +693,9 @@ input[type="text"]:hover:not(:focus) {
 .back-button {
   display: inline-block;
   padding: 12px 25px;
-  background: linear-gradient(45deg, var(--pokemon-color, #68A090), #f0f0f0);
-  color: white;
+  background: var(--pokemon-color);
+  border-color: #333;
+  color: black;
   text-decoration: none;
   border-radius: 50px;
   font-weight: bold;

@@ -30,36 +30,40 @@
                 <div class="pokemon-sprite">
                     <div class="sprite-controls">
                         <div class="toggle-switch-container" id="shiny-controls">
-                            <button class="toggle-button active" 
+                            <button class="toggle-button {{ 'active' if not pokemon_data.current_shiny else '' }}" 
                                     hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=false&gender={{ pokemon_data.current_gender }}"
                                     hx-target="#sprite-section"
                                     hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'shiny-controls', false)">
+                                    onclick="updateActiveButtons(this, 'shiny-controls', false)"
+                                    data-shiny="false">
                                 Normal
                             </button>
-                            <button class="toggle-button" 
+                            <button class="toggle-button {{ 'active' if pokemon_data.current_shiny else '' }}" 
                                     hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=true&gender={{ pokemon_data.current_gender }}"
                                     hx-target="#sprite-section"
                                     hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'shiny-controls', true)">
+                                    onclick="updateActiveButtons(this, 'shiny-controls', true)"
+                                    data-shiny="true">
                                 Shiny
                             </button>
                         </div>
 
                         {% if pokemon_data.has_female_sprites %}
                         <div class="toggle-switch-container" id="gender-controls">
-                            <button class="toggle-button active" 
+                            <button class="toggle-button {{ 'active' if pokemon_data.current_gender == 'male' else '' }}" 
                                     hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=male"
                                     hx-target="#sprite-section"
                                     hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'gender-controls', 'male')">
+                                    onclick="updateActiveButtons(this, 'gender-controls', 'male')"
+                                    data-gender="male">
                                 ♂ Macho
                             </button>
-                            <button class="toggle-button" 
+                            <button class="toggle-button {{ 'active' if pokemon_data.current_gender == 'female' else '' }}" 
                                     hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=female"
                                     hx-target="#sprite-section"
                                     hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'gender-controls', 'female')">
+                                    onclick="updateActiveButtons(this, 'gender-controls', 'female')"
+                                    data-gender="female">
                                 ♀ Hembra
                             </button>
                         </div>
@@ -196,8 +200,8 @@
 
     <script>
         // Variables globales para mantener el estado
-        let currentShiny = false;
-        let currentGender = 'male';
+        let currentShiny = {{ pokemon_data.current_shiny|string|lower }};
+        let currentGender = '{{ pokemon_data.current_gender }}';
 
         function updateActiveButtons(clickedButton, containerId, newValue) {
             // Actualizar estado global
@@ -224,26 +228,36 @@
             
             // Actualizar botones de shiny
             const shinyContainer = document.getElementById('shiny-controls');
-            const normalBtn = shinyContainer.children[0];
-            const shinyBtn = shinyContainer.children[1];
-            
-            normalBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=false&gender=${currentGender}`);
-            shinyBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=true&gender=${currentGender}`);
+            if (shinyContainer) {
+                const buttons = shinyContainer.querySelectorAll('.toggle-button');
+                buttons.forEach(btn => {
+                    const isShiny = btn.getAttribute('data-shiny') === 'true';
+                    btn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${isShiny}&gender=${currentGender}`);
+                });
+            }
 
             // Actualizar botones de género si existen
             const genderContainer = document.getElementById('gender-controls');
             if (genderContainer) {
-                const maleBtn = genderContainer.children[0];
-                const femaleBtn = genderContainer.children[1];
-                
-                maleBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${currentShiny}&gender=male`);
-                femaleBtn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${currentShiny}&gender=female`);
+                const buttons = genderContainer.querySelectorAll('.toggle-button');
+                buttons.forEach(btn => {
+                    const gender = btn.getAttribute('data-gender');
+                    btn.setAttribute('hx-get', `/sprite/${pokemonName}?shiny=${currentShiny}&gender=${gender}`);
+                });
             }
         }
 
-        
+        // Reinicializar HTMX después de cada actualización
         document.body.addEventListener('htmx:afterSwap', function(event) {
             htmx.process(event.target);
+        });
+
+        // Manejar el evento después de que HTMX complete la solicitud
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            // Verificar si la respuesta fue exitosa
+            if (event.detail.xhr.status === 200) {
+                console.log('Sprite actualizado correctamente');
+            }
         });
     </script>
 </body>

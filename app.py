@@ -395,11 +395,14 @@ def pokemon_especifico(pokemon_name):
         # Actualizar sprites con todos los disponibles
         pokemon['sprites'] = get_all_sprites(data.get('sprites', {}))
         
-        # Configuración inicial del sprite
+        # Configuración inicial del sprite (ESTADO INICIAL CORRECTO)
+        initial_shiny = False
+        initial_gender = 'male'
+        
         pokemon['has_female_sprites'] = bool(pokemon['sprites'].get('front_female') or pokemon['sprites'].get('front_shiny_female'))
-        pokemon['current_sprite'] = get_current_sprite(pokemon['sprites'], False, 'male')
-        pokemon['current_shiny'] = False
-        pokemon['current_gender'] = 'male'
+        pokemon['current_sprite'] = get_current_sprite(pokemon['sprites'], initial_shiny, initial_gender)
+        pokemon['current_shiny'] = initial_shiny
+        pokemon['current_gender'] = initial_gender
     
     return render_template('pokemon.html', pokemon_data=pokemon)
 
