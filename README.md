@@ -1,7 +1,11 @@
 <H1> Cómo miro a mi compa, pa que se ponga a workear:</h1>
 
-<p>No se que hacer ahora, Jamás espere llegar tan lejos.</p>
-- [ ] Me arreglas los Sprites en el Javascript? pls, no se porque no esta funcionando.
+
+
+
+-[X] Ya no hay más Javascript puro Css y Html, bueno eso es trampa porque estamos usando Htmx, pero ya no más
+
+
 
 
 Recuerda siempre que tu eres el Back mas duro de este pais en esto, bb <3
