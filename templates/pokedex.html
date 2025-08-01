@@ -16,7 +16,7 @@
         </section>
 
         <section class="list-section">
-            {% if varios and pokemons %}
+            {% if pokemons %}
             <div class="pokemon-grid">
                 {% for pokemon in pokemons %}
                     <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};" onclick="window.location.href='/pokedex/{{ pokemon.name|capitalize }}'">
@@ -58,60 +58,11 @@
             </div>
 
             {% else %}
+                <div class="no-pokemon">
+                     Busca un Pokémon para ver su información
+                </div>
+            {% endif %}
 
-            {% set pokemon_data = pokemon or datos %}
-            <div class="list-container {% if pokemon_data %}has-pokemon{% endif %}" 
-                 {% if pokemon_data and pokemon_data.type_color %}style="--pokemon-color: {{ pokemon_data.type_color }};"{% endif %}>
-                
-                {% if pokemon_data %}
-                    <!-- Si es un diccionario con estructura de pokemon -->
-                    {% if pokemon_data.name %}
-                        <div class="pokemon-info">
-                            <div class="pokemon-name">{{ pokemon_data.name }}</div>
-                            <div class="pokemon-id">N.° {{ pokemon_data.index }}</div>
-                            
-                            <div class="pokemon-types">
-                                <strong>Tipos:</strong>
-                                {% for type in pokemon_data.types %}
-                                    <span class="type-badge">{{ type }}</span>
-                                {% endfor %}
-                            </div>
-                            
-                            <div class="pokemon-stats">
-                                <div class="stat-row">
-                                    <span class="stat-label">Altura:</span>
-                                    <span>{{ pokemon_data.height / 10 }} m</span>
-                                </div>
-                                <div class="stat-row">
-                                    <span class="stat-label">Peso:</span>
-                                    <span>{{ pokemon_data.weight / 10 }} kg</span>
-                                </div>
-                                <div class="stat-row">
-                                    <span class="stat-label">Habilidades:</span>
-                                    <span>{{ pokemon_data.abilities | join(', ') }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pokemon-sprite">
-                            {% if pokemon_data.sprite %}
-                                <img src="{{ pokemon_data.sprite }}" alt="{{ pokemon_data.name }}">
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        <!-- Si es un string (formato anterior) -->
-                        <div class="pokemon-text-info">
-                            {{ pokemon_data|replace('\n', '<br>')|safe }}
-                        </div>
-                    {% endif %}
-                {% else %}
-                    <div class="no-pokemon">
-                         Busca un Pokémon para ver su información
-                    </div>
-                {% endif %}
-                
-            </div>
-        {% endif %}
         </section>
     </main>
 </body>
