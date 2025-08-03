@@ -3,7 +3,7 @@
 
 
 
--[X] Ya no hay más Javascript puro Css y Html, bueno eso es trampa porque estamos usando Htmx, pero ya no más
+-[X] Bromita volvio el JS, pero menos Html.
 
 
 
