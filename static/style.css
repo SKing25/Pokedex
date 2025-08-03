@@ -9,7 +9,7 @@
 
 ::view-transition-new(root) {
   animation: slide-in-from-right 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  animation-delay: 150ms; 
+  animation-delay: 150ms;
   mix-blend-mode: normal;
 }
 
@@ -35,36 +35,32 @@
   }
 }
 
-/* Asegurar que el contenedor raíz ocupe toda la pantalla */
+/* Base Styles */
 html, body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-}
-
-
-
-
-body {
-  background-color: #f0f0f0;
+  background-color: #f0f0f0; /* Default light mode background */
   font-family: Arial, sans-serif;
-  color: #333;
-  margin: 0;
-  padding: 20px;
+  color: #333; /* Default light mode text color */
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .main-wrapper {
   width: 100%;
   max-width: 800px;
 }
+
+/* Form Section (pokedex.html) */
 .form-section {
   margin-bottom: 50px;
 }
+
 .data-form {
   display: flex;
   flex-direction: column;
@@ -80,7 +76,7 @@ input[type="text"], input[type="submit"] {
   background-color: #fff;
   border-radius: 8px;
   outline: none;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
@@ -91,15 +87,26 @@ input[type="text"]:focus, input[type="submit"]:focus {
 input[type="submit"]:hover:not(:focus) {
   border-color: green;
 }
+
 input[type="text"]:hover:not(:focus) {
   border-color: green;
 }
 
+/* List Section (pokedex.html) */
 .list-section {
   width: 100%;
   padding-top: 10px;
   border-top: 3px dashed #ccc;
   margin-top: 30px;
+}
+
+.pokemon-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .list-container {
@@ -116,6 +123,7 @@ input[type="text"]:hover:not(:focus) {
   min-height: 100px;
   transition: all 0.3s ease;
   width: 100%;
+  cursor: pointer;
 }
 
 .list-container.has-pokemon:hover {
@@ -143,23 +151,17 @@ input[type="text"]:hover:not(:focus) {
   height: 200px;
   object-fit: contain;
   filter: drop-shadow(0 0 10px var(--pokemon-color, rgba(0,0,0,0.3)));
-  transition: filter 0.3s ease;
-  /* Mejorar calidad de imagen */
+  transition: filter 0.3s ease, transform 0.3s ease;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
-  /* Suavizado mejorado */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .pokemon-sprite img:hover {
   filter: drop-shadow(0 0 20px var(--pokemon-color, rgba(0,0,0,0.5)));
-  transform: scale(1.5);
-  transition: transform 0.3s ease, filter 0.3s ease; 
-}
-.pokemon-sprite img {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1.5); 
 }
 
 .pokemon-name {
@@ -213,13 +215,6 @@ input[type="text"]:hover:not(:focus) {
   color: #555;
 }
 
-.pokemon-text-info {
-  width: 100%;
-  font-size: 1.1em;
-  line-height: 1.6;
-  color: #333;
-}
-
 .no-pokemon {
   width: 100%;
   text-align: center;
@@ -229,21 +224,7 @@ input[type="text"]:hover:not(:focus) {
   padding: 40px 20px;
 }
 
-.list-container:hover.has-pokemon {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 100px var(--pokemon-color, rgba(255, 60, 60, 0.8));
-}
-
-.pokemon-grid {
-    display: grid;
-    grid-template-columns: 1fr;  /* Una sola columna */
-    gap: 1rem;
-    padding: 1rem;
-    max-width: 800px;  /* Opcional: limita el ancho máximo */
-    margin: 0 auto;    /* Opcional: centra la cuadrícula */
-}
-
-/* Estilos específicos para la página index */
+/* Index Page Styles (index.html) */
 .index-container {
   width: 100%;
   max-width: 1200px;
@@ -267,13 +248,6 @@ input[type="text"]:hover:not(:focus) {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradientMove 3s ease-in-out infinite;
-}
-
-.subtitle {
-  font-size: 1.2rem;
-  color: #666;
-  margin-top: 0.5rem;
-  font-weight: 300;
 }
 
 @keyframes gradientMove {
@@ -308,6 +282,7 @@ input[type="text"]:hover:not(:focus) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .carousel-pokemon::before {
@@ -339,6 +314,11 @@ input[type="text"]:hover:not(:focus) {
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .sprite-loaded {
@@ -432,72 +412,11 @@ input[type="text"]:hover:not(:focus) {
   font-style: italic;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .main-title {
-    font-size: 2.5rem;
-  }
-  
-  .pokemon-carousel {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-  
-  .carousel-pokemon {
-    padding: 1rem;
-  }
-  
-  .floating-sprite {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-.carousel-pokemon-link {
-    text-decoration: none;
-    color: none;
-    display: none;
-}
-
-.carousel-pokemon-link:hover .carousel-pokemon {
-    transform: translateY(-10px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-}
-
-.carousel-pokemon {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-}
-
-.pokemon-sprite-mini img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-  transition: transform 0.3s ease, filter 0.3s ease;
-  transition: cubic-bezier(0.075, 0.82, 0.165, 1);
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.pokemon-sprite-mini img:hover {
-  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
-  transform: scale(1.5);
-  transition: transform 0.3s ease, filter 0.3s ease;
-  transition: cubic-bezier(0.075, 0.82, 0. 165, 1);
-}
-
 .pokemon-card-link, .carousel-pokemon-link {
     text-decoration: none !important;
 }
-.pokemon-mini-name {
-    text-decoration: none !important;
-}
-/* -------------------------------------------------------------------------------------*/
-/* Estilos para la página detallada de Pokémon */
+
+/* Detail Page Styles (pokemon.html) */
 .pokemon-detail-container {
   background-color: #f8f8f8;
   border-radius: 20px;
@@ -522,15 +441,6 @@ input[type="text"]:hover:not(:focus) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-
-  .stat-bar-bg{
-    .pokemon-sprite img:hover {
-      filter: drop-shadow(0 0 20px var(--pokemon-color, rgba(0,0,0,0.5)));
-      transform: scale(1.5);
-      transition: transform 0.3s ease, filter 0.3s ease;
-      transition: cubic-bezier(0.075, 0.82, 0.165, 1);
-    }
-  }
 }
 
 .pokemon-basic-info {
@@ -548,7 +458,6 @@ input[type="text"]:hover:not(:focus) {
 }
 
 .stats-card {
-  background: white;
   border-left: 4px solid var(--pokemon-color, #68A090);
 }
 
@@ -577,24 +486,13 @@ input[type="text"]:hover:not(:focus) {
   height: 100%;
   border-radius: 10px;
   transition: width 1s ease, background-color 0.5s;
-  /* Color por defecto (verde) */
-  background-color: #4caf50;
+  background-color: #4caf50; /* Default green */
 }
 
-/* Rojo: bajo (menos de 40%) */
-.stat-bar-fill.low {
-  background-color: #e53935;
-}
-
-/* Amarillo: medio (40% a 70%) */
-.stat-bar-fill.medium {
-  background-color: #fbc02d;
-}
-
-/* Verde: alto (más de 70%) */
-.stat-bar-fill.high {
-  background-color: #4caf50;
-}
+/* Stat bar colors based on value (can be adjusted with JS or server-side logic) */
+.stat-bar-fill.low { background-color: #e53935; } /* Red */
+.stat-bar-fill.medium { background-color: #fbc02d; } /* Yellow */
+.stat-bar-fill.high { background-color: #4caf50; } /* Green */
 
 .stat-value {
   position: absolute;
@@ -605,7 +503,6 @@ input[type="text"]:hover:not(:focus) {
   color: black;
   text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
-
 
 .damage-relations-section {
   display: grid;
@@ -619,6 +516,13 @@ input[type="text"]:hover:not(:focus) {
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.damage-card:hover, .info-card:hover, .info-card stats-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px var(--pokemon-color, rgba(0,0,0,0.2));
+  animation: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .damage-list {
@@ -666,7 +570,7 @@ input[type="text"]:hover:not(:focus) {
   transition: box-shadow 0.3s, transform 0.3s;
 }
 
-.abilities-section:hover, .locations-section:hover, .damage-card-resistance:hover, .damage-card-weakness:hover {
+.abilities-section:hover, .locations-section:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 40px var(--pokemon-color, rgba(0,0,0,0.2));
 }
@@ -708,163 +612,247 @@ input[type="text"]:hover:not(:focus) {
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
-@media (max-width: 768px) {
-  .pokemon-basic-info,
-  .damage-relations-section {
-    grid-template-columns: 1fr;
-  }
-  
-  .pokemon-types-section {
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .detail-sprite {
-    width: 150px;
-    height: 150px;
-  }
+/* Sprite Controls (pokemon.html & sprite_partial.html) */
+.sprite-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
 }
 
+.toggle-switch-container {
+    display: flex;
+    border: 2px solid #333;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin: 5px;
+}
 
+.toggle-button {
+    flex: 1;
+    background-color: #333;
+    color: #999;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
 
-        .sprite-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
+.toggle-button:hover {
+    background-color: #555;
+    color: #ccc;
+    transform: none;
+    box-shadow: none;
+}
 
-        /* Container for the toggle switch */
-        .toggle-switch-container {
-            display: flex;
-            border: 2px solid #333; /* Dark border for the switch */
-            border-radius: 25px; /* Rounded corners for the switch container */
-            overflow: hidden; /* Ensures inner buttons respect border-radius */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            margin: 5px; /* Spacing between toggle groups */
-        }
+.toggle-button.active {
+    background-color: var(--pokemon-color, #007bff); /* Uses pokemon-color if available, else a default blue */
+    color: white;
+    box-shadow: none;
+}
 
-        .toggle-button {
-            flex: 1; /* Make buttons take equal width within the container */
-            background-color: #333; /* Dark background for inactive state */
-            color: #999; /* Light gray for inactive text */
-            border: none;
-            padding: 10px 20px; /* Adjust padding as needed */
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            white-space: nowrap; /* Prevent text wrapping */
-        }
+/* Specific active state for Shiny button */
+.toggle-button.shiny.active {
+    background-color: #f093fb; /* A distinct color for active shiny */
+    color: white;
+}
 
-        .toggle-button:hover {
-            background-color: #555; /* Slightly lighter on hover for inactive */
-            color: #ccc;
-            transform: none; /* Remove previous hover transform */
-            box-shadow: none; /* Remove previous hover shadow */
-        }
+/* Adjustments for normal shiny button when not active, if needed */
+.toggle-button.shiny {
+    background-color: #333; /* Dark background for inactive shiny */
+    color: #999;
+}
 
-        .toggle-button.active {
-            background-color: #007bff; /* Blue for active state (Normal/Male) */
-            color: white;
-            box-shadow: none; /* Remove shadow for active state */
-        }
+.sprite-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
 
-        /* Specific active state for Shiny button */
-        .toggle-button.shiny.active {
-            background-color: #f093fb; /* A distinct color for active shiny */
-            color: white;
-        }
-
-        /* Adjustments for normal shiny button when not active, if needed */
-        .toggle-button.shiny {
-            background-color: #333; /* Dark background for inactive shiny */
-            color: #999;
-        }
-
-
-        .sprite-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 200px;
-        }
-
-        .detail-sprite {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 180px;
-            max-height: 180px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-        }
-
-        .detail-sprite.changing {
-            transform: scale(0.8) rotateY(90deg);
-            opacity: 0.5;
-        }
-
-        .detail-sprite.loaded {
-            transform: scale(1) rotateY(0deg);
-            opacity: 1;
-        }
-
-        .sprite-info {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .sprite-not-available {
-            background: #f5f5f5;
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            color: #999;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .sprite-controls {
-                gap: 5px;
-            }
-            
-            .toggle-button {
-                padding: 6px 12px;
-                font-size: 12px;
-                min-width: 70px;
-            }
-            .toggle-switch-container {
-                border-radius: 20px;
-            }
-        }
-
-
-        /* Animaciones y estados del sprite */
 .detail-sprite {
-    transition: opacity 0.2s ease;
-    max-width: 100%;
-    height: auto;
+    transition: opacity 0.2s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 180px;
+    max-height: 180px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .detail-sprite.changing {
-    opacity: 0;
+    transform: scale(0.8) rotateY(90deg);
+    opacity: 0.5;
 }
 
 .detail-sprite.loaded {
+    transform: scale(1) rotateY(0deg);
     opacity: 1;
 }
 
 .sprite-not-available {
-    color: #ff6b6b;
+    background: #f5f5f5;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: #999;
     font-style: italic;
 }
 
-/* Botones de control */
-.toggle-button.active {
-    background-color: var(--pokemon-color);
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+}
+
+body.dark-mode input[type="text"],
+body.dark-mode input[type="submit"] {
+  background-color: #444;
+  border-color: #666;
+  color: #e0e0e0;
+}
+
+body.dark-mode .list-container,
+body.dark-mode .carousel-pokemon,
+body.dark-mode .info-card,
+body.dark-mode .damage-card,
+body.dark-mode .abilities-section,
+body.dark-mode .locations-section,
+body.dark-mode .sprite-not-available {
+  background-color: #3a3a3a;
+  border-color: #555;
+  /* Original box-shadow: 0 0 80px var(--pokemon-color, rgba(0,0,0,0.6)); */
+}
+
+/* Added specific dark mode styles for .pokemon-detail-container */
+body.dark-mode .pokemon-detail-container {
+  background-color: #3a3a3a; /* Darker background for the main detail container */
+  border-color: var(--pokemon-color, #555); /* Adjust border color for dark mode */
+  box-shadow: 0 0 80px var(--pokemon-color, rgba(0,0,0,0.6)); /* Maintain themed shadow */
+}
+
+body.dark-mode .pokemon-name,
+body.dark-mode .showcase-title,
+body.dark-mode .main-title,
+body.dark-mode .stat-label,
+body.dark-mode .pokemon-id,
+body.dark-mode .sprite-info,
+body.dark-mode .ability-name,
+body.dark-mode .section-title,
+body.dark-mode .info-title,
+body.dark-mode .damage-title {
+  color: #e0e0e0;
+}
+
+body.dark-mode .pokemon-stats,
+body.dark-mode .damage-list li {
+  background: #444;
+  border-color: #666;
+}
+
+body.dark-mode .stat-bar-bg {
+  background: #666;
+}
+
+body.dark-mode .stat-value {
+  color: #e0e0e0;
+  text-shadow: 0 0 2px rgba(0,0,0,0.8);
+}
+
+body.dark-mode .toggle-switch-container {
+    border-color: #999;
+}
+
+body.dark-mode .toggle-button {
+    background-color: #555;
+    color: #bbb;
+}
+
+body.dark-mode .toggle-button:hover {
+    background-color: #777;
+    color: #eee;
+}
+
+body.dark-mode .toggle-button.active {
+    background-color: var(--pokemon-color, #007bff); /* Retain active color */
     color: white;
 }
 
+/* Dark mode toggle button */
+.dark-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.9em;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+  background-color: #555;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2.5rem;
+  }
+
+  .pokemon-carousel {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .carousel-pokemon {
+    padding: 1rem;
+  }
+
+  .floating-sprite {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pokemon-basic-info,
+  .damage-relations-section {
+    grid-template-columns: 1fr;
+  }
+
+  .pokemon-types-section {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .detail-sprite {
+    width: 150px;
+    height: 150px;
+  }
+
+  .sprite-controls {
+      gap: 5px;
+  }
+
+  .toggle-button {
+      padding: 6px 12px;
+      font-size: 12px;
+      min-width: 70px;
+  }
+  .toggle-switch-container {
+      border-radius: 20px;
+  }
+}
