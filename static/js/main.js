@@ -1,5 +1,66 @@
 // ===== FUNCIONES GLOBALES =====
 
+// IvAn
+
+
+    const chatButton = document.getElementById('open-chat-btn');
+    const closeButton = document.getElementById('close-chat-btn');
+    const chatContainer = document.getElementById('ivan-chat-container');
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+
+    chatButton.addEventListener('click', () => {
+        chatContainer.style.display = 'flex';
+        chatButton.style.display = 'none';
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    closeButton.addEventListener('click', () => {
+        chatContainer.style.display = 'none';
+        chatButton.style.display = 'block';
+    });
+
+    function sendMessage() {
+        const message = userInput.value.trim();
+        if (message === '') return;
+
+        // Mostrar el mensaje del usuario
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.classList.add('chat-message', 'user-message');
+        userMessageDiv.textContent = message;
+        chatBox.appendChild(userMessageDiv);
+        
+        userInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Enviar el mensaje al servidor Flask
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Mostrar la respuesta de la IA
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.classList.add('chat-message', 'ai-message');
+            aiMessageDiv.innerHTML = data.response; // Usar innerHTML para interpretar los enlaces
+            chatBox.appendChild(aiMessageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            const errorMessageDiv = document.createElement('div');
+            errorMessageDiv.classList.add('chat-message', 'ai-message');
+            errorMessageDiv.textContent = 'Lo siento, hubo un error. Por favor, inténtalo de nuevo más tarde.';
+            chatBox.appendChild(errorMessageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+
 // Función para toggle de modo oscuro con lógica mejorada
 function toggleDarkMode() {
     const body = document.body;
@@ -177,6 +238,11 @@ function initializePage() {
     }
     // Para pokedex.html no hay inicialización específica adicional
 }
+
+
+
+
+
 
 // Ejecutar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', initializePage);

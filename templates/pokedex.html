@@ -1,13 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Gestión de Datos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
 </head>
-<body>
 
+<body>
+    <header>
+        <a href="/" class="logo-link">
+            <img src="{{ url_for('static', filename='images/ivan_logo.png') }}" alt="IvAn - Asistente Pokémon"
+                class="logo">
+        </a>
+    </header>
+    <button id="open-chat-btn" class="chat-toggle-btn">
+        Hablar con IvAn
+    </button>
+
+    <div id="ivan-chat-container" class="chat-container">
+        <div class="chat-header">
+            <h3 class="chat-title">IvAn - Asistente Pokémon</h3>
+            <button id="close-chat-btn" class="chat-close-btn">&times;</button>
+        </div>
+        <div id="chat-box" class="chat-box">
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="user-input" placeholder="Pregúntale a IvAn..."
+                onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
     <button class="dark-mode-toggle" onclick="toggleDarkMode()">Modo Oscuro</button>
     <main class="main-wrapper">
         <section class="form-section">
@@ -21,48 +45,49 @@
             {% if pokemons %}
             <div class="pokemon-grid">
                 {% for pokemon in pokemons %}
-                    <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};" onclick="window.location.href='/pokedex/{{ pokemon.name|capitalize }}'">
-                        <div class="pokemon-info">
-                            <div class="pokemon-name">{{ pokemon.name }}</div>
-                            <div class="pokemon-id">N.° {{ pokemon.index }}</div>
+                <div class="list-container has-pokemon" style="--pokemon-color: {{ pokemon.type_color }};"
+                    onclick="window.location.href='/pokedex/{{ pokemon.name|capitalize }}'">
+                    <div class="pokemon-info">
+                        <div class="pokemon-name">{{ pokemon.name }}</div>
+                        <div class="pokemon-id">N.° {{ pokemon.index }}</div>
 
-                            <div class="pokemon-types">
-                                <strong>Tipos:</strong>
-                                {% for type in pokemon.types %}
-                                    <span class="type-badge">{{ type }}</span>
-                                {% endfor %}
-                            </div>
-
-                            <div class="pokemon-stats">
-                                <div class="stat-row">
-                                    <span class="stat-label">Altura:</span>
-                                    <span>{{ pokemon.height / 10 }} m</span>
-                                </div>
-                                <div class="stat-row">
-                                    <span class="stat-label">Peso:</span>
-                                    <span>{{ pokemon.weight / 10 }} kg</span>
-                                </div>
-                                <div class="stat-row">
-                                    <span class="stat-label">Habilidades:</span>
-                                        <span>{{ pokemon.abilities | join(', ') }}</span>
-                                </div>
-
-                            </div>
+                        <div class="pokemon-types">
+                            <strong>Tipos:</strong>
+                            {% for type in pokemon.types %}
+                            <span class="type-badge">{{ type }}</span>
+                            {% endfor %}
                         </div>
 
-                        <div class="pokemon-sprite">
-                            {% if pokemon.sprite %}
-                                <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}">
-                            {% endif %}
+                        <div class="pokemon-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">Altura:</span>
+                                <span>{{ pokemon.height / 10 }} m</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Peso:</span>
+                                <span>{{ pokemon.weight / 10 }} kg</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Habilidades:</span>
+                                <span>{{ pokemon.abilities | join(', ') }}</span>
+                            </div>
+
                         </div>
                     </div>
+
+                    <div class="pokemon-sprite">
+                        {% if pokemon.sprite %}
+                        <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}">
+                        {% endif %}
+                    </div>
+                </div>
                 {% endfor %}
             </div>
 
             {% else %}
-                <div class="no-pokemon">
-                     Busca un Pokémon para ver su información
-                </div>
+            <div class="no-pokemon">
+                Busca un Pokémon para ver su información
+            </div>
             {% endif %}
 
         </section>
@@ -70,4 +95,5 @@
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>

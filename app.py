@@ -1,8 +1,15 @@
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, jsonify
 import requests
 import random
+from openai import OpenAI
 
 app = Flask(__name__)
+
+# Configuración del cliente de OpenAI para "IvAn"
+client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key="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" 
+)
 
 REGIONES = {
     'kanto': 'generation-i',
@@ -33,7 +40,7 @@ def get_type_color(pokemon_type):
         'water': '#6890F0',
         'electric': '#F8D030',
         'grass': '#78C850',
-        'ice': '#98D8D8',
+        'ice': "#008F8F",
         'fighting': '#C03028',
         'poison': '#A040A0',
         'ground': '#E0C068',
@@ -443,6 +450,40 @@ def get_sprite(pokemon_name):
                            sprite=current_sprite,
                            is_shiny=is_shiny,
                            gender=gender)
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    """Ruta para manejar el chat con IA - IvAn"""
+    user_message = request.json.get('message')
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    try:
+        messages = [
+            {"role": "system", "content": """
+             Eres IvAn, un experto asistente Pokémon.
+             Tu tarea es ayudar a los usuarios con todo lo relacionado a Pokémon, incluyendo:
+             - Recomendar equipos competitivos o para la aventura.
+             - Dar información detallada sobre un Pokémon (tipos, habilidades, etc.).
+             - Proporcionar enlaces a la página de un Pokémon específico. Por ejemplo, si el usuario pregunta por Bulbasaur,
+               debes incluir un enlace en formato Markdown: [Bulbasaur](/pokedex/bulbasaur).
+             - Tu tono debe ser amigable y útil.
+             - Responde en español y mantén la consistencia.
+             - Siempre incluye el enlace al Pokémon mencionado usando el formato [Nombre del Pokémon](/pokedex/nombre-del-pokemon).
+             """},
+            {"role": "user", "content": user_message}
+        ]
+
+        response = client.chat.completions.create(
+            model="z-ai/glm-4.5-air:free",
+            messages=messages
+        )
+
+        ai_response = response.choices[0].message.content
+        return jsonify({"response": ai_response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

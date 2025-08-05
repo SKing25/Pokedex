@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,32 @@
     <link rel="icon" href="{{ url_for('static', filename='images/logo.ico') }}" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
+
 <body>
-<button class="dark-mode-toggle" onclick="toggleDarkMode()">Modo Oscuro</button>
+    <header>
+        <a href="/" class="logo-link">
+            <img src="{{ url_for('static', filename='images/ivan_logo.png') }}" alt="IvAn - Asistente Pokémon"
+                class="logo">
+        </a>
+    </header>
+    <button id="open-chat-btn" class="chat-toggle-btn">
+        Hablar con IvAn
+    </button>
+
+    <div id="ivan-chat-container" class="chat-container">
+        <div class="chat-header">
+            <h3 class="chat-title">IvAn - Asistente Pokémon</h3>
+            <button id="close-chat-btn" class="chat-close-btn">&times;</button>
+        </div>
+        <div id="chat-box" class="chat-box">
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="user-input" placeholder="Pregúntale a IvAn..."
+                onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">Modo Oscuro</button>
 
     <main class="main-wrapper">
         <div class="pokemon-detail-container" style="--pokemon-color: {{ pokemon_data.type_color }};">
@@ -25,47 +50,43 @@
                 <div class="pokemon-types">
                     <strong>Tipos:</strong>
                     {% for type in pokemon_data.types %}
-                        <span class="type-badge" style="background-color: {{ get_type_color(type) if get_type_color else pokemon_data.type_color }}">{{ type }}</span>
+                    <span class="type-badge"
+                        style="background-color: {{ get_type_color(type) if get_type_color else pokemon_data.type_color }}">{{
+                        type }}</span>
                     {% endfor %}
                 </div>
 
                 <div class="pokemon-sprite">
                     <div class="sprite-controls">
                         <div class="toggle-switch-container" id="shiny-controls">
-                            <button class="toggle-button {{ 'active' if not pokemon_data.current_shiny else '' }}" 
-                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=false&gender={{ pokemon_data.current_gender }}"
-                                    hx-target="#sprite-section"
-                                    hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'shiny-controls', false)"
-                                    data-shiny="false">
+                            <button class="toggle-button {{ 'active' if not pokemon_data.current_shiny else '' }}"
+                                hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=false&gender={{ pokemon_data.current_gender }}"
+                                hx-target="#sprite-section" hx-swap="innerHTML"
+                                onclick="updateActiveButtons(this, 'shiny-controls', false)" data-shiny="false">
                                 Normal
                             </button>
-                            <button class="toggle-button {{ 'active' if pokemon_data.current_shiny else '' }}" 
-                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=true&gender={{ pokemon_data.current_gender }}"
-                                    hx-target="#sprite-section"
-                                    hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'shiny-controls', true)"
-                                    data-shiny="true">
+                            <button class="toggle-button {{ 'active' if pokemon_data.current_shiny else '' }}"
+                                hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny=true&gender={{ pokemon_data.current_gender }}"
+                                hx-target="#sprite-section" hx-swap="innerHTML"
+                                onclick="updateActiveButtons(this, 'shiny-controls', true)" data-shiny="true">
                                 Shiny
                             </button>
                         </div>
 
                         {% if pokemon_data.has_female_sprites %}
                         <div class="toggle-switch-container" id="gender-controls">
-                            <button class="toggle-button {{ 'active' if pokemon_data.current_gender == 'male' else '' }}" 
-                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=male"
-                                    hx-target="#sprite-section"
-                                    hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'gender-controls', 'male')"
-                                    data-gender="male">
+                            <button
+                                class="toggle-button {{ 'active' if pokemon_data.current_gender == 'male' else '' }}"
+                                hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=male"
+                                hx-target="#sprite-section" hx-swap="innerHTML"
+                                onclick="updateActiveButtons(this, 'gender-controls', 'male')" data-gender="male">
                                 ♂ Macho
                             </button>
-                            <button class="toggle-button {{ 'active' if pokemon_data.current_gender == 'female' else '' }}" 
-                                    hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=female"
-                                    hx-target="#sprite-section"
-                                    hx-swap="innerHTML"
-                                    onclick="updateActiveButtons(this, 'gender-controls', 'female')"
-                                    data-gender="female">
+                            <button
+                                class="toggle-button {{ 'active' if pokemon_data.current_gender == 'female' else '' }}"
+                                hx-get="/sprite/{{ pokemon_data.name.lower() }}?shiny={{ pokemon_data.current_shiny|string|lower }}&gender=female"
+                                hx-target="#sprite-section" hx-swap="innerHTML"
+                                onclick="updateActiveButtons(this, 'gender-controls', 'female')" data-gender="female">
                                 ♀ Hembra
                             </button>
                         </div>
@@ -75,13 +96,11 @@
                     <div id="sprite-section">
                         <div class="sprite-container">
                             {% if pokemon_data.current_sprite.url %}
-                                <img id="pokemonSprite"
-                                     src="{{ pokemon_data.current_sprite.url }}"
-                                     alt="{{ pokemon_data.name }}"
-                                     class="detail-sprite loaded"
-                                     view-transition-name="pokemon-sprite">
+                            <img id="pokemonSprite" src="{{ pokemon_data.current_sprite.url }}"
+                                alt="{{ pokemon_data.name }}" class="detail-sprite loaded"
+                                view-transition-name="pokemon-sprite">
                             {% else %}
-                                <div class="sprite-not-available">Sprite no disponible</div>
+                            <div class="sprite-not-available">Sprite no disponible</div>
                             {% endif %}
                         </div>
 
@@ -109,28 +128,28 @@
                     <h3 class="info-title">Estadísticas base</h3>
                     <div class="stats-grid">
                         {% if pokemon_data.stats %}
-                            {% for stat in pokemon_data.stats %}
-                                {% if stat is mapping %}
-                                    <div class="stat-bar-container">
-                                        <span class="stat-name">{{ stat.name }}:</span>
-                                        <div class="stat-bar-bg">
-                                            <div class="stat-bar-fill" style="width: {{ (stat.value / 255) * 100 }}%;"></div>
-                                            <span class="stat-value">{{ stat.value }}</span>
-                                        </div>
-                                    </div>
-                                {% else %}
-                                    {% set stat_parts = stat.split(': ') %}
-                                    {% set stat_name = stat_parts[0] %}
-                                    {% set stat_value = stat_parts[1]|int %}
-                                    <div class="stat-bar-container">
-                                        <span class="stat-name">{{ stat_name }}:</span>
-                                        <div class="stat-bar-bg">
-                                            <div class="stat-bar-fill" style="width: {{ (stat_value / 255) * 100 }}%;"></div>
-                                            <span class="stat-value">{{ stat_value }}</span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                        {% for stat in pokemon_data.stats %}
+                        {% if stat is mapping %}
+                        <div class="stat-bar-container">
+                            <span class="stat-name">{{ stat.name }}:</span>
+                            <div class="stat-bar-bg">
+                                <div class="stat-bar-fill" style="width: {{ (stat.value / 255) * 100 }}%;"></div>
+                                <span class="stat-value">{{ stat.value }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        {% set stat_parts = stat.split(': ') %}
+                        {% set stat_name = stat_parts[0] %}
+                        {% set stat_value = stat_parts[1]|int %}
+                        <div class="stat-bar-container">
+                            <span class="stat-name">{{ stat_name }}:</span>
+                            <div class="stat-bar-bg">
+                                <div class="stat-bar-fill" style="width: {{ (stat_value / 255) * 100 }}%;"></div>
+                                <span class="stat-value">{{ stat_value }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
                         {% endif %}
                     </div>
                 </div>
@@ -142,14 +161,16 @@
                     <h3 class="damage-title">Resistencias</h3>
                     <ul class="damage-list">
                         {% for resistance in pokemon_data.damage_relations.resistances %}
-                            <li>
-                                <span class="type-tag" style="background-color: {{ get_type_color(resistance.type) if get_type_color else pokemon_data.type_color }}">
-                                    {{ resistance.type }}
-                                </span>
-                                <span class="damage-multiplier x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}">
-                                    x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}
-                                </span>
-                            </li>
+                        <li>
+                            <span class="type-tag"
+                                style="background-color: {{ get_type_color(resistance.type) if get_type_color else pokemon_data.type_color }}">
+                                {{ resistance.type }}
+                            </span>
+                            <span
+                                class="damage-multiplier x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}">
+                                x{{ resistance.multiplier|replace('0.5', '½')|replace('0.25', '¼') }}
+                            </span>
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -158,14 +179,16 @@
                     <h3 class="damage-title">Debilidades</h3>
                     <ul class="damage-list">
                         {% for weakness in pokemon_data.damage_relations.weaknesses %}
-                            <li>
-                                <span class="type-tag" style="background-color: {{ get_type_color(weakness.type) if get_type_color else pokemon_data.type_color }}">
-                                    {{ weakness.type }}
-                                </span>
-                                <span class="damage-multiplier x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}">
-                                    x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}
-                                </span>
-                            </li>
+                        <li>
+                            <span class="type-tag"
+                                style="background-color: {{ get_type_color(weakness.type) if get_type_color else pokemon_data.type_color }}">
+                                {{ weakness.type }}
+                            </span>
+                            <span
+                                class="damage-multiplier x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}">
+                                x{{ weakness.multiplier|replace('2', '2')|replace('4', '4') }}
+                            </span>
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -176,13 +199,13 @@
             <div class="abilities-section">
                 <h3 class="section-title">Habilidades</h3>
                 {% for ability in pokemon_data.ability_details %}
-                    <div class="ability-card">
-                        <h4 class="ability-name">{{ ability.name }}</h4>
-                        <p class="ability-description">{{ ability.description }}</p>
-                        {% if ability.is_hidden %}
-                            <span class="hidden-ability-tag">Habilidad Oculta</span>
-                        {% endif %}
-                    </div>
+                <div class="ability-card">
+                    <h4 class="ability-name">{{ ability.name }}</h4>
+                    <p class="ability-description">{{ ability.description }}</p>
+                    {% if ability.is_hidden %}
+                    <span class="hidden-ability-tag">Habilidad Oculta</span>
+                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
             {% endif %}
@@ -204,11 +227,12 @@
     <script>
         window.pokemon_data = {
             name: '{{ pokemon_data.name }}',
-            current_shiny: {{ pokemon_data.current_shiny|string|lower }},
-            current_gender: '{{ pokemon_data.current_gender }}'
+            current_shiny: {{ pokemon_data.current_shiny | string | lower }},
+        current_gender: '{{ pokemon_data.current_gender }}'
         };
     </script>
-    
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>
