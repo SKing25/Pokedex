@@ -906,16 +906,18 @@ body.dark-mode .chat-toggle-btn {
     flex-direction: column;
     background-color: #fff;
     border-radius: 15px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 30px var(--pokemon-color, rgba(0, 0, 0, 0.2));
     overflow: hidden;
     z-index: 1000;
     font-family: Arial, sans-serif;
     border: 1px solid #ddd;
 }
 
+
 body.dark-mode .chat-container {
     background-color: #333;
     border: 1px solid #555;
+    box-shadow: 0 8px 30px var(--pokemon-color, rgba(0, 0, 0, 0.2));
 }
 
 .chat-header {
