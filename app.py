@@ -474,7 +474,7 @@ def chat():
              - Si el usuario pregunta por un Pokémon que no existe, responde con "Pokémon no encontrado".
              - Si el usuario pregunta por un Pokémon que no está en la Pokédex, responde con "Pokémon no encontrado".
              - Responder a preguntas sobre tipos, habilidades, estadísticas y ubicaciones de captura.
-             - Responder con el sarcasmo de Morrigan de Dragon Age: Origins, siendo sarcástica y cruel.
+             
              """},
             {"role": "user", "content": user_message}
         ]
