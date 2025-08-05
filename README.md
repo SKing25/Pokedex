@@ -3,12 +3,13 @@
 
 
 
--[X] Bromita volvio el JS, pero menos Html.
 
 
 
+<p>Recuerda siempre que tu eres el Back mas duro de este pais en esto, bb <3 </p>
 
-Recuerda siempre que tu eres el Back mas duro de este pais en esto, bb <3
+
+<h3> "Sólo posee el poder aquel que se inclina para recogerlo." </h3> 
 
 
 <div style="display: flex; justify-content: center; margin: 20px 0;">
