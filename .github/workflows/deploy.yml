@@ -2,7 +2,7 @@ name: deploy render
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
