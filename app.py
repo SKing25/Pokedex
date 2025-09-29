@@ -11,7 +11,7 @@ app = Flask(__name__)
 # Configuración del cliente de OpenAI para "IvAn"
 client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
-  api_key="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"
+  api_key = os.getenv("OPENROUTER_API_KEY")
 )
 
 REGIONES = {
