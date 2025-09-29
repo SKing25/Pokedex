@@ -1,6 +1,9 @@
 from flask import Flask, redirect, render_template, request, jsonify
 import requests
 import random
+import threading
+import pickle
+import os
 from openai import OpenAI
 
 app = Flask(__name__)
@@ -8,7 +11,7 @@ app = Flask(__name__)
 # Configuración del cliente de OpenAI para "IvAn"
 client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
-  api_key="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" 
+  api_key="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"
 )
 
 REGIONES = {
@@ -23,17 +26,71 @@ REGIONES = {
     'paldea': 'generation-ix'
 }
 
+# ---- OPTIMIZACIÓN: DICCIONARIOS DE CACHE ----
+POKEMON_CACHE = {}         # nombre o id : datos completos
+TYPE_RELATIONS_CACHE = {}  # nombre tipo : relaciones de daño
+ABILITY_CACHE = {}         # url : descripción
+REGION_CACHE = {}          # nombre region : datos completos
+SPRITES_CACHE = {}         # nombre o id : sprites completos
+
+CACHE_FILE = "pokemon_cache.pkl"
+
+def save_cache():
+    try:
+        with open(CACHE_FILE, "wb") as f:
+            pickle.dump(POKEMON_CACHE, f)
+    except Exception as e:
+        print(f"Error al guardar cache: {e}")
+
+def load_cache():
+    global POKEMON_CACHE
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "rb") as f:
+                POKEMON_CACHE = pickle.load(f)
+            print(f"Cache precargado con {len(POKEMON_CACHE)} Pokémon desde disco.")
+        except Exception as e:
+            print(f"Error al cargar cache: {e}")
+
+def preload_pokemon_cache():
+    print("Precargando todos los datos de Pokémon (esto puede tardar 1-2 minutos la primera vez)...")
+    updated = False
+    
+    for i in range(1, 1011): 
+        key = str(i)
+        if key not in POKEMON_CACHE:
+            url = f"https://pokeapi.co/api/v2/pokemon/{i}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                POKEMON_CACHE[key] = response.json()
+                updated = True
+            else:
+                print(f"Error cargando Pokémon {i}")
+    if updated:
+        save_cache()
+        print("¡Precarga y guardado completo!")
+    else:
+        print("Cache ya estaba completo.")
+
+# Precarga el cache de disco al iniciar
+load_cache()
+# Precarga masiva en un hilo aparte (no bloquea inicio)
+threading.Thread(target=preload_pokemon_cache, daemon=True).start()
 
 def get_pokedata(pokemon):
+    key = str(pokemon).lower()
+    if key in POKEMON_CACHE:
+        return POKEMON_CACHE[key]
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon}"
     response = requests.get(url)
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        POKEMON_CACHE[key] = data
+        save_cache()  # Guarda el cache actualizado
+        return data
     return None
 
-
 def get_type_color(pokemon_type):
-    """Retorna el color hexadecimal basado en el tipo del Pokémon"""
     type_colors = {
         'normal': '#A8A878',
         'fire': '#F08030',
@@ -56,28 +113,39 @@ def get_type_color(pokemon_type):
     }
     return type_colors.get(pokemon_type, '#68A090')
 
-
 def get_damage_relations(pokemon_types):
-    """Obtiene las relaciones de daño para los tipos del Pokémon"""
     all_resistances = {}
     all_weaknesses = {}
 
     for pokemon_type in pokemon_types:
+        
+        if pokemon_type in TYPE_RELATIONS_CACHE:
+            cached = TYPE_RELATIONS_CACHE[pokemon_type]
+            for k, v in cached['all_resistances'].items():
+                if k in all_resistances:
+                    all_resistances[k] *= v
+                else:
+                    all_resistances[k] = v
+            for k, v in cached['all_weaknesses'].items():
+                if k in all_weaknesses:
+                    all_weaknesses[k] *= v
+                else:
+                    all_weaknesses[k] = v
+            continue
+
         url = f"https://pokeapi.co/api/v2/type/{pokemon_type}"
         response = requests.get(url)
 
         if response.status_code == 200:
             data = response.json()
 
-            # Procesar debilidades (double damage from)
             for relation in data['damage_relations']['double_damage_from']:
                 type_name = relation['name']
                 if type_name in all_weaknesses:
-                    all_weaknesses[type_name] *= 2  # Si ya existe, multiplicar
+                    all_weaknesses[type_name] *= 2
                 else:
                     all_weaknesses[type_name] = 2
 
-            # Procesar resistencias (half damage from)
             for relation in data['damage_relations']['half_damage_from']:
                 type_name = relation['name']
                 if type_name in all_resistances:
@@ -85,12 +153,15 @@ def get_damage_relations(pokemon_types):
                 else:
                     all_resistances[type_name] = 0.5
 
-            # Procesar inmunidades (no damage from)
             for relation in data['damage_relations']['no_damage_from']:
                 type_name = relation['name']
                 all_resistances[type_name] = 0
 
-    # Convertir a formato para el template
+            TYPE_RELATIONS_CACHE[pokemon_type] = {
+                'all_resistances': dict(all_resistances),
+                'all_weaknesses': dict(all_weaknesses)
+            }
+
     resistances = []
     for type_name, multiplier in all_resistances.items():
         if multiplier <= 0.5:
@@ -112,15 +183,17 @@ def get_damage_relations(pokemon_types):
         'weaknesses': weaknesses
     }
 
-
 def get_ability_details(ability_url, is_hidden=False):
-    """Obtiene detalles de una habilidad"""
+    if ability_url in ABILITY_CACHE:
+        result = ABILITY_CACHE[ability_url]
+        result['is_hidden'] = is_hidden
+        return result
+
     response = requests.get(ability_url)
     if response.status_code == 200:
         data = response.json()
         description = ""
 
-        # Buscar descripción en español primero, luego inglés
         for entry in data['effect_entries']:
             if entry['language']['name'] == 'es':
                 description = entry['short_effect']
@@ -132,16 +205,20 @@ def get_ability_details(ability_url, is_hidden=False):
                     description = entry['short_effect']
                     break
 
-        return {
+        result = {
             'name': data['name'].replace('-', ' ').title(),
             'description': description or "Descripción no disponible",
             'is_hidden': is_hidden
         }
+        ABILITY_CACHE[ability_url] = result
+        return result
     return None
 
-
-def get_all_sprites(sprites_data):
-    return {
+def get_all_sprites(sprites_data, key=None):
+    cache_key = key or sprites_data.get('front_default')
+    if cache_key and cache_key in SPRITES_CACHE:
+        return SPRITES_CACHE[cache_key]
+    sprites = {
         'front_default': sprites_data.get('front_default'),
         'front_shiny': sprites_data.get('front_shiny'),
         'front_female': sprites_data.get('front_female'),
@@ -151,36 +228,21 @@ def get_all_sprites(sprites_data):
         'back_female': sprites_data.get('back_female'),
         'back_shiny_female': sprites_data.get('back_shiny_female')
     }
-
+    if cache_key:
+        SPRITES_CACHE[cache_key] = sprites
+    return sprites
 
 def get_current_sprite(sprites, is_shiny, gender):
-    """Determina qué sprite mostrar basado en los parámetros"""
     if is_shiny and gender == 'female' and sprites.get('front_shiny_female'):
-        return {
-            'url': sprites['front_shiny_female'],
-            'description': 'Shiny - Hembra'
-        }
+        return {'url': sprites['front_shiny_female'], 'description': 'Shiny - Hembra'}
     elif is_shiny and sprites.get('front_shiny'):
-        return {
-            'url': sprites['front_shiny'],
-            'description': 'Shiny - Macho'
-        }
+        return {'url': sprites['front_shiny'], 'description': 'Shiny - Macho'}
     elif not is_shiny and gender == 'female' and sprites.get('front_female'):
-        return {
-            'url': sprites['front_female'],
-            'description': 'Normal - Hembra'
-        }
+        return {'url': sprites['front_female'], 'description': 'Normal - Hembra'}
     elif sprites.get('front_default'):
-        return {
-            'url': sprites['front_default'],
-            'description': 'Normal - Macho'
-        }
+        return {'url': sprites['front_default'], 'description': 'Normal - Macho'}
     else:
-        return {
-            'url': None,
-            'description': 'Sprite no disponible'
-        }
-
+        return {'url': None, 'description': 'Sprite no disponible'}
 
 def get_pokeinfo(index, data):
     name = data["name"].capitalize()
@@ -189,7 +251,6 @@ def get_pokeinfo(index, data):
     weight = data["weight"]
     types = [t["type"]["name"] for t in data["types"]]
 
-    # Obtener ubicaciones
     locations_url = data.get("location_area_encounters", f"https://pokeapi.co/api/v2/pokemon/{index}/encounters")
     locations = []
     try:
@@ -202,11 +263,9 @@ def get_pokeinfo(index, data):
     except Exception:
         locations = []
 
-    # Obtener el color del tipo principal
     primary_type = types[0] if types else 'normal'
     type_color = get_type_color(primary_type)
 
-    # Obtener estadísticas
     stats = []
     stat_names_map = {
         'hp': 'PS',
@@ -223,8 +282,7 @@ def get_pokeinfo(index, data):
         display_name = stat_names_map.get(stat_name, stat_name.replace('-', ' ').title())
         stats.append(f"{display_name}: {stat_value}")
 
-    # Obtener todos los sprites
-    sprites = get_all_sprites(data.get('sprites', {}))
+    sprites = get_all_sprites(data.get('sprites', {}), key=name.lower())
 
     pokemon_info = {
         'index': index,
@@ -237,13 +295,12 @@ def get_pokeinfo(index, data):
         'type_color': type_color,
         'locations': locations,
         'sprite': sprites['front_default'],
-        'sprites': sprites,  # Todos los sprites disponibles, en caso de shiny o género
+        'sprites': sprites,
         'back_sprite': sprites['back_default'],
         'stats': stats
     }
 
     return pokemon_info
-
 
 def one_pokemon(pokemon):
     data = get_pokedata(pokemon)
@@ -252,38 +309,42 @@ def one_pokemon(pokemon):
         return get_pokeinfo(index, data)
     return None
 
-
 def get_region(region):
+    if region in REGION_CACHE:
+        return REGION_CACHE[region]
     url = f"https://pokeapi.co/api/v2/generation/{region}"
     response = requests.get(url)
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        REGION_CACHE[region] = data
+        return data
     return None
 
-
 def get_region_info(region):
-    region = REGIONES.get(region.lower())
-    if not region:
+    region_key = region.lower()
+    region_id = REGIONES.get(region_key)
+    if not region_id:
         return None
 
-    data = get_region(region)
+    data = get_region(region_id)
     if not data:
         return None
+
+    if region_key in REGION_CACHE and REGION_CACHE[region_key].get('pokemons'):
+        return REGION_CACHE[region_key]['pokemons']
 
     species = [p['name'] for p in data["pokemon_species"]]
     pokemons = []
 
     for species_name in species:
-        try:
-            pokedata = get_pokedata(species_name)
-            if pokedata:
-                info = get_pokeinfo(pokedata["id"], pokedata)
-                pokemons.append(info)
-        except:
-            continue
+        pokedata = get_pokedata(species_name)
+        if pokedata:
+            info = get_pokeinfo(pokedata["id"], pokedata)
+            pokemons.append(info)
 
-    return sorted(pokemons, key=lambda x: x['index']) if pokemons else None
-
+    result = sorted(pokemons, key=lambda x: x['index']) if pokemons else None
+    REGION_CACHE[region_key] = {'pokemons': result}
+    return result
 
 def n_pokemons(rango):
     pokemons = []
@@ -309,57 +370,42 @@ def n_pokemons(rango):
         except ValueError:
             return None
 
+        
         for i in range(start, finish + 1):
-            try:
-                data = get_pokedata(i)
-                if data:
-                    pokemons.append(get_pokeinfo(i, data))
-            except:
-                continue
+            data = POKEMON_CACHE.get(str(i))
+            if data:
+                pokemons.append(get_pokeinfo(i, data))
 
     elif ',' in rango:
         rango = rango.replace(" ", "").split(',')
         for p in rango:
-            try:
-                data = get_pokedata(p)
-                if data:
-                    index = data["id"]
-                    pokemons.append(get_pokeinfo(index, data))
-            except:
-                continue
+            data = POKEMON_CACHE.get(str(p)) or get_pokedata(p)
+            if data:
+                index = data["id"]
+                pokemons.append(get_pokeinfo(index, data))
 
     return pokemons
 
-
 def get_random_pokemons(n):
-    """Obtiene n pokémons aleatorios usando la pokeapi"""
     pokemons = []
     max_pokemon_id = 1010
     ids = random.sample(range(1, max_pokemon_id + 1), n)
 
     for poke_id in ids:
-        try:
-            data = get_pokedata(poke_id)
-            if data:
-                info = get_pokeinfo(data["id"], data)
-                pokemons.append(info)
-        except:
-            continue
+        data = POKEMON_CACHE.get(str(poke_id)) or get_pokedata(poke_id)
+        if data:
+            info = get_pokeinfo(data["id"], data)
+            pokemons.append(info)
     return pokemons
-
 
 @app.context_processor
 def utility_processor():
     return dict(get_type_color=get_type_color)
 
-
 @app.route('/')
 def index():
     random_pokemons = get_random_pokemons(10)
-    for pokemon in random_pokemons:
-        print(f"- {pokemon['name']} (#{pokemon['index']})")
     return render_template('index.html', random_pokemons=random_pokemons)
-
 
 @app.route('/pokedex', methods=['GET', 'POST'])
 def pokedex():
@@ -384,18 +430,14 @@ def pokedex():
     pokemon.append(info)
     return render_template('pokedex.html', varios=True, pokemons=pokemon)
 
-
 @app.route('/pokedex/<pokemon_name>')
 def pokemon_especifico(pokemon_name):
-    """Ruta para mostrar detalles específicos de un Pokémon"""
     pokemon = one_pokemon(pokemon_name.lower())
     if not pokemon:
         return redirect('/pokedex')
 
-    # Obtener datos adicionales
     data = get_pokedata(pokemon_name.lower())
     if data:
-        # Convertir estadísticas a formato para template
         stats = []
         for stat in data['stats']:
             stats.append({
@@ -404,11 +446,9 @@ def pokemon_especifico(pokemon_name):
             })
         pokemon['stats'] = stats
 
-        # Obtener relaciones de daño
         damage_relations = get_damage_relations(pokemon['types'])
         pokemon['damage_relations'] = damage_relations
 
-        # Obtener detalles de habilidades
         ability_details = []
         for ability in data['abilities']:
             details = get_ability_details(ability['ability']['url'], ability['is_hidden'])
@@ -416,10 +456,8 @@ def pokemon_especifico(pokemon_name):
                 ability_details.append(details)
         pokemon['ability_details'] = ability_details
 
-        # Actualizar sprites con todos los disponibles
-        pokemon['sprites'] = get_all_sprites(data.get('sprites', {}))
+        pokemon['sprites'] = get_all_sprites(data.get('sprites', {}), key=pokemon_name.lower())
 
-        # Configuración inicial del sprite (ESTADO INICIAL CORRECTO)
         initial_shiny = False
         initial_gender = 'male'
 
@@ -431,19 +469,16 @@ def pokemon_especifico(pokemon_name):
 
     return render_template('pokemon.html', pokemon_data=pokemon)
 
-
 @app.route('/sprite/<pokemon_name>')
 def get_sprite(pokemon_name):
-    """Ruta HTMX para obtener sprites dinámicamente"""
     is_shiny = request.args.get('shiny', 'false').lower() == 'true'
     gender = request.args.get('gender', 'male')
 
-    # Obtener datos del Pokémon
     data = get_pokedata(pokemon_name.lower())
     if not data:
         return '<div class="sprite-not-available">Error al cargar sprite</div>', 404
 
-    sprites = get_all_sprites(data.get('sprites', {}))
+    sprites = get_all_sprites(data.get('sprites', {}), key=pokemon_name.lower())
     current_sprite = get_current_sprite(sprites, is_shiny, gender)
 
     return render_template('sprite_partial.html',
@@ -451,10 +486,8 @@ def get_sprite(pokemon_name):
                            is_shiny=is_shiny,
                            gender=gender)
 
-
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Ruta para manejar el chat con IA - IvAn"""
     user_message = request.json.get('message')
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
@@ -474,7 +507,6 @@ def chat():
              - Si el usuario pregunta por un Pokémon que no existe, responde con "Pokémon no encontrado".
              - Si el usuario pregunta por un Pokémon que no está en la Pokédex, responde con "Pokémon no encontrado".
              - Responder a preguntas sobre tipos, habilidades, estadísticas y ubicaciones de captura.
-             
              """},
             {"role": "user", "content": user_message}
         ]
@@ -488,7 +520,6 @@ def chat():
         return jsonify({"response": ai_response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
