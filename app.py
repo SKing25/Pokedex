@@ -9,10 +9,9 @@ from dotenv import load_dotenv
 load_dotenv() 
 app = Flask(__name__)
 
-# Configuración del cliente de OpenAI para "IvAn"
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY")
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 REGIONES = {
@@ -534,6 +533,8 @@ def chat():
     user_message = request.json.get('message')
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
+
+
     try:
         messages = [
             {"role": "system", "content": """
@@ -553,13 +554,13 @@ def chat():
             {"role": "user", "content": user_message}
         ]
         response = client.chat.completions.create(
-            model="z-ai/glm-4.5-air:free",
+            model="llama-3.1-8b-instant",
             messages=messages
         )
         ai_response = response.choices[0].message.content
         return jsonify({"response": ai_response})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Error comunicándose con Groq: {str(e)}"}), 500
 
 
 def get_forms_data(pokemon_name):
@@ -591,6 +592,7 @@ def forms(pokemon_name):
     if not forms_data:
         return redirect('/pokedex')
     return render_template('forms.html', pokemon_name=pokemon_name, forms=forms_data)
+
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0')
