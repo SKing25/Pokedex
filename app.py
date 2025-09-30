@@ -42,17 +42,17 @@ class LRUCache:
         if len(self.cache) > self.max_size:
             self.cache.popitem(last=False)
 
-# Configuración para Render (RAM limitada)
+# Configuración para Render (RAM muy limitada)
 if os.getenv('RENDER'):
+    MAX_POKEMON_CACHE = 10
+    MAX_TYPE_CACHE = 5
+    MAX_ABILITY_CACHE = 5
+    MAX_SPRITES_CACHE = 5
+else:
     MAX_POKEMON_CACHE = 30
     MAX_TYPE_CACHE = 10
-    MAX_ABILITY_CACHE = 15
+    MAX_ABILITY_CACHE = 10
     MAX_SPRITES_CACHE = 10
-else:
-    MAX_POKEMON_CACHE = 100
-    MAX_TYPE_CACHE = 50
-    MAX_ABILITY_CACHE = 50
-    MAX_SPRITES_CACHE = 50
 
 POKEMON_CACHE = LRUCache(MAX_POKEMON_CACHE)
 TYPE_RELATIONS_CACHE = LRUCache(MAX_TYPE_CACHE)
@@ -79,11 +79,7 @@ def get_pokedata(pokemon):
                 'stats': data['stats'],
                 'height': data['height'],
                 'weight': data['weight'],
-                'sprites': {
-                    'front_default': data['sprites'].get('front_default'),
-                    'front_shiny': data['sprites'].get('front_shiny')
-                },
-                'location_area_encounters': data.get('location_area_encounters', f"https://pokeapi.co/api/v2/pokemon/{data['id']}/encounters")
+                'sprite': data['sprites'].get('front_default')
             }
             POKEMON_CACHE.set(key, essential_data)
             return essential_data
@@ -244,17 +240,6 @@ def get_pokeinfo(index, data):
     height = data["height"]
     weight = data["weight"]
     types = [t["type"]["name"] for t in data["types"]]
-    locations_url = data.get("location_area_encounters", f"https://pokeapi.co/api/v2/pokemon/{index}/encounters")
-    locations = []
-    try:
-        loc_response = requests.get(locations_url, timeout=5)
-        if loc_response.status_code == 200:
-            loc_data = loc_response.json()
-            for loc in loc_data:
-                loc_name = loc["location_area"]["name"].replace("-", " ").title()
-                locations.append(loc_name)
-    except Exception:
-        locations = []
     primary_type = types[0] if types else 'normal'
     type_color = get_type_color(primary_type)
     stats = []
@@ -271,7 +256,6 @@ def get_pokeinfo(index, data):
         stat_value = stat_data["base_stat"]
         display_name = stat_names_map.get(stat_name, stat_name.replace('-', ' ').title())
         stats.append(f"{display_name}: {stat_value}")
-    sprites = get_all_sprites(data.get('sprites', {}), key=name.lower())
     pokemon_info = {
         'index': index,
         'name': name,
@@ -281,10 +265,7 @@ def get_pokeinfo(index, data):
         'types': types,
         'primary_type': primary_type,
         'type_color': type_color,
-        'locations': locations,
-        'sprite': sprites['front_default'],
-        'sprites': sprites,
-        'back_sprite': sprites.get('back_default'),
+        'sprite': data.get('sprite'),
         'stats': stats
     }
     return pokemon_info
@@ -334,7 +315,7 @@ def get_region_info(region):
     return result
 
 def n_pokemons(rango):
-    MAX_RANGE = 20
+    MAX_RANGE = 10  # Limitar a 10 en búsquedas
     pokemons = []
     if '-' in rango:
         rango = rango.replace(" ", "").split('-')
@@ -369,7 +350,7 @@ def n_pokemons(rango):
 def get_random_pokemons(n):
     pokemons = []
     max_pokemon_id = 1010
-    ids = random.sample(range(1, max_pokemon_id + 1), n)
+    ids = random.sample(range(1, max_pokemon_id + 1), min(n, 6))  # Limitar a 6 en portada
     for poke_id in ids:
         data = get_pokedata(poke_id)
         if data:
@@ -485,4 +466,4 @@ def chat():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0')
