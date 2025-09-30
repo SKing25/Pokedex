@@ -4,7 +4,9 @@ import random
 import os
 from openai import OpenAI
 from collections import OrderedDict
+from dotenv import load_dotenv
 
+load_dotenv() 
 app = Flask(__name__)
 
 # Configuración del cliente de OpenAI para "IvAn"
