@@ -210,12 +210,54 @@
             </div>
             {% endif %}
 
-            {% if pokemon_data.locations and pokemon_data.locations|length > 0 %}
-            <div class="locations-section">
-                <h3 class="section-title">Ubicaciones</h3>
-                <div class="locations-grid">
-                    {% for location in pokemon_data.locations %}
-                    <div class="location-item">{{ location }}</div>
+            <!-- Sección de Formas Alternativas -->
+            {% if pokemon_data.has_forms and pokemon_data.alternative_forms %}
+            <div class="alternative-forms-section">
+                <h3 class="section-title">Formas Alternativas</h3>
+                <div class="forms-grid">
+                    {% for form in pokemon_data.alternative_forms %}
+                    <div class="form-card" style="--form-color: {{ get_type_color(form.types[0]) if form.types else pokemon_data.type_color }};">
+                        <div class="form-header">
+                            <h4 class="form-name">{{ form.name }}</h4>
+                            <span class="form-type-badge">{{ form.form_type }}</span>
+                        </div>
+
+                        <div class="form-sprite">
+                            {% if form.sprite %}
+                                <img src="{{ form.sprite }}" alt="{{ form.name }}" class="form-sprite-img">
+                            {% else %}
+                                <div class="sprite-not-available">Sprite no disponible</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-info">
+                            <div class="form-types">
+                                <strong>Tipos:</strong>
+                                {% for type in form.types %}
+                                    <span class="type-badge" style="background-color: {{ get_type_color(type) }}">{{ type }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="form-measurements">
+                                <div class="measurement">
+                                    <span class="measurement-label">Altura:</span>
+                                    <span>{{ "%.1f"|format(form.height / 10) }} m</span>
+                                </div>
+                                <div class="measurement">
+                                    <span class="measurement-label">Peso:</span>
+                                    <span>{{ "%.1f"|format(form.weight / 10) }} kg</span>
+                                </div>
+                            </div>
+
+                            <div class="form-abilities">
+                                <strong>Habilidades:</strong>
+                                {% for ability in form.abilities %}
+                                    <span class="ability-name">{{ ability.replace('-', ' ').title() }}</span>
+                                    {% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
@@ -236,3 +278,4 @@
 </body>
 
 </html>
+

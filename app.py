@@ -50,17 +50,20 @@ if os.getenv('RENDER'):
     MAX_TYPE_CACHE = 5
     MAX_ABILITY_CACHE = 5
     MAX_SPRITES_CACHE = 5
+    MAX_FORMS_CACHE = 5
 else:
     MAX_POKEMON_CACHE = 30
     MAX_TYPE_CACHE = 10
     MAX_ABILITY_CACHE = 10
     MAX_SPRITES_CACHE = 10
+    MAX_FORMS_CACHE = 15
 
 POKEMON_CACHE = LRUCache(MAX_POKEMON_CACHE)
 TYPE_RELATIONS_CACHE = LRUCache(MAX_TYPE_CACHE)
 ABILITY_CACHE = LRUCache(MAX_ABILITY_CACHE)
 REGION_CACHE = LRUCache(10)
 SPRITES_CACHE = LRUCache(MAX_SPRITES_CACHE)
+FORMS_CACHE = LRUCache(MAX_FORMS_CACHE)
 
 # ---- FUNCIONES OPTIMIZADAS ----
 def get_pokedata(pokemon):
@@ -235,6 +238,92 @@ def get_current_sprite(sprites, is_shiny, gender):
         return {'url': sprites['front_default'], 'description': 'Normal - Macho'}
     else:
         return {'url': None, 'description': 'Sprite no disponible'}
+
+def get_pokemon_species(pokemon_id):
+    """Obtiene información de la especie del Pokémon para acceder a las formas"""
+    cached = FORMS_CACHE.get(f"species_{pokemon_id}")
+    if cached:
+        return cached
+
+    url = f"https://pokeapi.co/api/v2/pokemon-species/{pokemon_id}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            FORMS_CACHE.set(f"species_{pokemon_id}", data)
+            return data
+    except Exception as e:
+        print(f"Error fetching species for {pokemon_id}: {e}")
+    return None
+
+def get_pokemon_forms(pokemon_id):
+    """Obtiene todas las formas alternativas de un Pokémon"""
+    species_data = get_pokemon_species(pokemon_id)
+    if not species_data:
+        return []
+
+    cached = FORMS_CACHE.get(f"forms_{pokemon_id}")
+    if cached:
+        return cached
+
+    forms = []
+    varieties = species_data.get('varieties', [])
+
+    for variety in varieties:
+        if variety['is_default']:
+            continue  # Saltamos la forma por defecto
+
+        form_name = variety['pokemon']['name']
+        form_data = get_pokedata(form_name)
+
+        if form_data:
+            # Obtener información específica de la forma
+            form_info = {
+                'name': form_name.replace('-', ' ').title(),
+                'id': form_data['id'],
+                'types': [t['type']['name'] for t in form_data['types']],
+                'sprite': form_data.get('sprite'),
+                'height': form_data['height'],
+                'weight': form_data['weight'],
+                'abilities': [a['ability']['name'] for a in form_data['abilities']],
+                'stats': []
+            }
+
+            # Agregar estadísticas
+            for stat in form_data['stats']:
+                form_info['stats'].append({
+                    'name': stat['stat']['name'].replace('-', ' ').title(),
+                    'value': stat['base_stat']
+                })
+
+            # Determinar el tipo de forma
+            if 'alola' in form_name:
+                form_info['form_type'] = 'Forma Alola'
+            elif 'galar' in form_name:
+                form_info['form_type'] = 'Forma Galar'
+            elif 'hisui' in form_name:
+                form_info['form_type'] = 'Forma Hisui'
+            elif 'paldea' in form_name:
+                form_info['form_type'] = 'Forma Paldea'
+            elif 'mega' in form_name:
+                form_info['form_type'] = 'Mega Evolución'
+            elif 'gigantamax' in form_name:
+                form_info['form_type'] = 'Forma Gigantamax'
+            else:
+                form_info['form_type'] = 'Forma Alternativa'
+
+            forms.append(form_info)
+
+    FORMS_CACHE.set(f"forms_{pokemon_id}", forms)
+    return forms
+
+def get_current_form(pokemon_id, forms, form_name):
+    """Obtiene la forma actual de un Pokémon dado su ID y las formas disponibles"""
+    if form_name and form_name != "default":
+        for form in forms:
+            if form['name'].lower() == form_name.lower():
+                return form
+    return next((form for form in forms if form.get('is_default')), None)
 
 def get_pokeinfo(index, data):
     name = data["name"].capitalize()
@@ -418,6 +507,12 @@ def pokemon_especifico(pokemon_name):
         pokemon['current_sprite'] = get_current_sprite(pokemon['sprites'], initial_shiny, initial_gender)
         pokemon['current_shiny'] = initial_shiny
         pokemon['current_gender'] = initial_gender
+
+        # Agregar formas alternativas
+        alternative_forms = get_pokemon_forms(pokemon['index'])
+        pokemon['alternative_forms'] = alternative_forms
+        pokemon['has_forms'] = len(alternative_forms) > 0
+
     return render_template('pokemon.html', pokemon_data=pokemon)
 
 @app.route('/sprite/<pokemon_name>')
@@ -466,6 +561,36 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+def get_forms_data(pokemon_name):
+    key = str(pokemon_name).lower()
+    cached = FORMS_CACHE.get(key)
+    if cached:
+        return cached
+    url = f"https://pokeapi.co/api/v2/pokemon-form/{pokemon_name}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            forms = []
+            for form in data['forms']:
+                form_data = {
+                    'name': form['name'],
+                    'url': form['url']
+                }
+                forms.append(form_data)
+            FORMS_CACHE.set(key, forms)
+            return forms
+    except Exception as e:
+        print(f"Error fetching forms for {pokemon_name}: {e}")
+    return None
+
+@app.route('/forms/<pokemon_name>')
+def forms(pokemon_name):
+    forms_data = get_forms_data(pokemon_name)
+    if not forms_data:
+        return redirect('/pokedex')
+    return render_template('forms.html', pokemon_name=pokemon_name, forms=forms_data)
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0')
