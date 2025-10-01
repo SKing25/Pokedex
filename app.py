@@ -3,7 +3,6 @@ import requests
 import random
 import os
 from openai import OpenAI
-from collections import OrderedDict
 from dotenv import load_dotenv
 
 load_dotenv() 
@@ -26,50 +25,9 @@ REGIONES = {
     'paldea': 'generation-ix'
 }
 
-# ---- OPTIMIZACIÓN: CACHE LRU ----
-class LRUCache:
-    def __init__(self, max_size):
-        self.max_size = max_size
-        self.cache = OrderedDict()
-    def get(self, key):
-        if key in self.cache:
-            self.cache.move_to_end(key)
-            return self.cache[key]
-        return None
-    def set(self, key, value):
-        if key in self.cache:
-            self.cache.move_to_end(key)
-        self.cache[key] = value
-        if len(self.cache) > self.max_size:
-            self.cache.popitem(last=False)
 
-# Configuración para Render (RAM muy limitada)
-if os.getenv('RENDER'):
-    MAX_POKEMON_CACHE = 30
-    MAX_TYPE_CACHE = 10
-    MAX_ABILITY_CACHE = 15
-    MAX_SPRITES_CACHE = 10
-    MAX_FORMS_CACHE = 10
-else:
-    MAX_POKEMON_CACHE = 100
-    MAX_TYPE_CACHE = 50
-    MAX_ABILITY_CACHE = 50
-    MAX_SPRITES_CACHE = 50
-    MAX_FORMS_CACHE = 50
-
-POKEMON_CACHE = LRUCache(MAX_POKEMON_CACHE)
-TYPE_RELATIONS_CACHE = LRUCache(MAX_TYPE_CACHE)
-ABILITY_CACHE = LRUCache(MAX_ABILITY_CACHE)
-REGION_CACHE = LRUCache(10)
-SPRITES_CACHE = LRUCache(MAX_SPRITES_CACHE)
-FORMS_CACHE = LRUCache(MAX_FORMS_CACHE)
-
-# ---- FUNCIONES OPTIMIZADAS ----
 def get_pokedata(pokemon):
     key = str(pokemon).lower()
-    cached = POKEMON_CACHE.get(key)
-    if cached:
-        return cached
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon}"
     try:
         response = requests.get(url, timeout=5)
@@ -85,7 +43,6 @@ def get_pokedata(pokemon):
                 'weight': data['weight'],
                 'sprite': data['sprites'].get('front_default')
             }
-            POKEMON_CACHE.set(key, essential_data)
             return essential_data
     except Exception as e:
         print(f"Error fetching Pokemon {pokemon}: {e}")
@@ -118,19 +75,6 @@ def get_damage_relations(pokemon_types):
     all_resistances = {}
     all_weaknesses = {}
     for pokemon_type in pokemon_types:
-        cached = TYPE_RELATIONS_CACHE.get(pokemon_type)
-        if cached:
-            for k, v in cached['all_resistances'].items():
-                if k in all_resistances:
-                    all_resistances[k] *= v
-                else:
-                    all_resistances[k] = v
-            for k, v in cached['all_weaknesses'].items():
-                if k in all_weaknesses:
-                    all_weaknesses[k] *= v
-                else:
-                    all_weaknesses[k] = v
-            continue
         url = f"https://pokeapi.co/api/v2/type/{pokemon_type}"
         try:
             response = requests.get(url, timeout=5)
@@ -151,12 +95,9 @@ def get_damage_relations(pokemon_types):
                 for relation in data['damage_relations']['no_damage_from']:
                     type_name = relation['name']
                     all_resistances[type_name] = 0
-                TYPE_RELATIONS_CACHE.set(pokemon_type, {
-                    'all_resistances': dict(all_resistances),
-                    'all_weaknesses': dict(all_weaknesses)
-                })
         except Exception as e:
             print(f"Error fetching type {pokemon_type}: {e}")
+
     resistances = []
     for type_name, multiplier in all_resistances.items():
         if multiplier <= 0.5:
@@ -177,11 +118,6 @@ def get_damage_relations(pokemon_types):
     }
 
 def get_ability_details(ability_url, is_hidden=False):
-    cached = ABILITY_CACHE.get(ability_url)
-    if cached:
-        result = dict(cached)
-        result['is_hidden'] = is_hidden
-        return result
     try:
         response = requests.get(ability_url, timeout=5)
         if response.status_code == 200:
@@ -201,17 +137,12 @@ def get_ability_details(ability_url, is_hidden=False):
                 'description': description or "Descripción no disponible",
                 'is_hidden': is_hidden
             }
-            ABILITY_CACHE.set(ability_url, result)
             return result
     except Exception as e:
         print(f"Error fetching ability {ability_url}: {e}")
     return None
 
 def get_all_sprites(sprites_data, key=None):
-    cache_key = key or sprites_data.get('front_default')
-    cached = SPRITES_CACHE.get(cache_key) if cache_key else None
-    if cached:
-        return cached
     sprites = {
         'front_default': sprites_data.get('front_default'),
         'front_shiny': sprites_data.get('front_shiny'),
@@ -222,8 +153,6 @@ def get_all_sprites(sprites_data, key=None):
         'back_female': sprites_data.get('back_female'),
         'back_shiny_female': sprites_data.get('back_shiny_female')
     }
-    if cache_key:
-        SPRITES_CACHE.set(cache_key, sprites)
     return sprites
 
 def get_current_sprite(sprites, is_shiny, gender):
@@ -239,17 +168,11 @@ def get_current_sprite(sprites, is_shiny, gender):
         return {'url': None, 'description': 'Sprite no disponible'}
 
 def get_pokemon_species(pokemon_id):
-    """Obtiene información de la especie del Pokémon para acceder a las formas"""
-    cached = FORMS_CACHE.get(f"species_{pokemon_id}")
-    if cached:
-        return cached
-
     url = f"https://pokeapi.co/api/v2/pokemon-species/{pokemon_id}"
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            FORMS_CACHE.set(f"species_{pokemon_id}", data)
             return data
     except Exception as e:
         print(f"Error fetching species for {pokemon_id}: {e}")
@@ -260,10 +183,6 @@ def get_pokemon_forms(pokemon_id):
     species_data = get_pokemon_species(pokemon_id)
     if not species_data:
         return []
-
-    cached = FORMS_CACHE.get(f"forms_{pokemon_id}")
-    if cached:
-        return cached
 
     forms = []
     varieties = species_data.get('varieties', [])
@@ -313,7 +232,6 @@ def get_pokemon_forms(pokemon_id):
 
             forms.append(form_info)
 
-    FORMS_CACHE.set(f"forms_{pokemon_id}", forms)
     return forms
 
 def get_current_form(pokemon_id, forms, form_name):
@@ -368,15 +286,11 @@ def one_pokemon(pokemon):
     return None
 
 def get_region(region):
-    cached = REGION_CACHE.get(region)
-    if cached:
-        return cached
     url = f"https://pokeapi.co/api/v2/generation/{region}"
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            REGION_CACHE.set(region, data)
             return data
     except Exception as e:
         print(f"Error fetching region {region}: {e}")
@@ -390,9 +304,6 @@ def get_region_info(region):
     data = get_region(region_id)
     if not data:
         return None
-    cached = REGION_CACHE.get(region_key)
-    if cached and cached.get('pokemons'):
-        return cached['pokemons']
     species = [p['name'] for p in data["pokemon_species"][:20]]  # Limitar a 20
     pokemons = []
     for species_name in species:
@@ -401,7 +312,6 @@ def get_region_info(region):
             info = get_pokeinfo(pokedata["id"], pokedata)
             pokemons.append(info)
     result = sorted(pokemons, key=lambda x: x['index']) if pokemons else None
-    REGION_CACHE.set(region_key, {'pokemons': result})
     return result
 
 def n_pokemons(rango):
@@ -564,10 +474,6 @@ def chat():
 
 
 def get_forms_data(pokemon_name):
-    key = str(pokemon_name).lower()
-    cached = FORMS_CACHE.get(key)
-    if cached:
-        return cached
     url = f"https://pokeapi.co/api/v2/pokemon-form/{pokemon_name}"
     try:
         response = requests.get(url, timeout=5)
@@ -580,7 +486,6 @@ def get_forms_data(pokemon_name):
                     'url': form['url']
                 }
                 forms.append(form_data)
-            FORMS_CACHE.set(key, forms)
             return forms
     except Exception as e:
         print(f"Error fetching forms for {pokemon_name}: {e}")
