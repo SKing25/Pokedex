@@ -45,17 +45,17 @@ class LRUCache:
 
 # Configuración para Render (RAM muy limitada)
 if os.getenv('RENDER'):
-    MAX_POKEMON_CACHE = 10
-    MAX_TYPE_CACHE = 5
-    MAX_ABILITY_CACHE = 5
-    MAX_SPRITES_CACHE = 5
-    MAX_FORMS_CACHE = 5
-else:
     MAX_POKEMON_CACHE = 30
     MAX_TYPE_CACHE = 10
-    MAX_ABILITY_CACHE = 10
+    MAX_ABILITY_CACHE = 15
     MAX_SPRITES_CACHE = 10
-    MAX_FORMS_CACHE = 15
+    MAX_FORMS_CACHE = 10
+else:
+    MAX_POKEMON_CACHE = 100
+    MAX_TYPE_CACHE = 50
+    MAX_ABILITY_CACHE = 50
+    MAX_SPRITES_CACHE = 50
+    MAX_FORMS_CACHE = 50
 
 POKEMON_CACHE = LRUCache(MAX_POKEMON_CACHE)
 TYPE_RELATIONS_CACHE = LRUCache(MAX_TYPE_CACHE)
@@ -405,7 +405,7 @@ def get_region_info(region):
     return result
 
 def n_pokemons(rango):
-    MAX_RANGE = 10  # Limitar a 10 en búsquedas
+    MAX_RANGE = 100  # Limitar a 10 en búsquedas
     pokemons = []
     if '-' in rango:
         rango = rango.replace(" ", "").split('-')
@@ -440,7 +440,7 @@ def n_pokemons(rango):
 def get_random_pokemons(n):
     pokemons = []
     max_pokemon_id = 1010
-    ids = random.sample(range(1, max_pokemon_id + 1), min(n, 6))  # Limitar a 6 en portada
+    ids = random.sample(range(1, max_pokemon_id + 1), n)  # Limitar a 6 en portada
     for poke_id in ids:
         data = get_pokedata(poke_id)
         if data:
