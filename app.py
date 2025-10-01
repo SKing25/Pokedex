@@ -315,7 +315,7 @@ def get_region_info(region):
     return result
 
 def n_pokemons(rango):
-    MAX_RANGE = 100  # Limitar a 10 en búsquedas
+    MAX_RANGE = 500  # Limitar a 10 en búsquedas
     pokemons = []
     if '-' in rango:
         rango = rango.replace(" ", "").split('-')
